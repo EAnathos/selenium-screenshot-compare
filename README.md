@@ -34,6 +34,10 @@ python3 -m venv .venv
 geckodriver n'a **pas** besoin d'être installé : Selenium Manager (inclus dans
 selenium >= 4.6) le télécharge automatiquement au premier lancement.
 
+> **Windows** — un venv range ses exécutables dans `.venv\Scripts\` (et non
+> `.venv/bin/`). Remplace donc `./.venv/bin/xxx` par `.\.venv\Scripts\xxx.exe`
+> dans toutes les commandes. Détails et exemples : section [Windows](#windows).
+
 ## Obtenir un second binaire Firefox
 
 Pour comparer deux **versions**, il faut deux binaires distincts. Sans toucher au
@@ -109,6 +113,50 @@ quelques px plus haut par une version) fait « déborder » tout le contenu en
 dessous et gonfle le %, même si les pages se ressemblent visuellement. Le champ
 `first_diff_y` aide à distinguer « vraie différence de rendu » de « simple
 décalage ».
+
+## Windows
+
+Trois différences par rapport aux commandes Linux du README :
+
+1. **Exécutables du venv** dans `.venv\Scripts\` :
+
+   ```powershell
+   python -m venv .venv
+   .\.venv\Scripts\pip.exe install -r requirements.txt
+   ```
+
+   Ou active le venv une fois, puis tape directement `robot`, `pip`… :
+
+   ```powershell
+   .\.venv\Scripts\Activate.ps1   # si bloqué : Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+   ```
+
+2. **Chemins Firefox** : trouve le binaire système, installe le second dans un
+   dossier dédié, et utilise des slashs `/` (le `\` est un caractère d'échappement
+   en Robot Framework) :
+
+   ```powershell
+   # Firefox système (via le registre)
+   (Get-ItemProperty "HKLM:\SOFTWARE\Mozilla\Mozilla Firefox\*\Main")."PathToExe"
+
+   # Second Firefox : installer une version précise dans un dossier séparé
+   & ".\Firefox Setup 128.0esr.exe" /S /InstallDirectoryPath="C:\ff128esr"
+   ```
+
+3. **Lancer la suite** en surchargeant les deux chemins Firefox :
+
+   ```powershell
+   .\.venv\Scripts\robot.exe `
+     --variable "FIREFOX_A:C:/Program Files/Mozilla Firefox/firefox.exe" `
+     --variable "FIREFOX_B:C:/ff128esr/firefox.exe" `
+     --outputdir output/robot `
+     tests/interactive_navigation.robot
+   ```
+
+> Si tu obtiens `NoSuchDriverException: Unable to obtain driver for firefox`,
+> c'est presque toujours un chemin `FIREFOX_A`/`FIREFOX_B` invalide (les valeurs
+> par défaut sont des chemins Linux) : vérifie que
+> `& "<chemin>" --version` répond bien pour chacun.
 
 ## Qualité / développement
 
