@@ -1,0 +1,48 @@
+*** Settings ***
+Documentation       Scenario de navigation par CLICS, compare a chaque etape le
+...                 rendu entre deux versions de Firefox (pilotees en parallele).
+...
+...                 On ouvre le site dans les deux versions, on clique sur des
+...                 boutons/liens avec des keywords Selenium, et a chaque etape on
+...                 verifie que le rendu ne diverge pas au-dela du seuil. Un
+...                 result.json est ecrit par etape dans ${OUTPUT_DIR}/<etape>/.
+...
+...                 Lancer :
+...                 robot --outputdir output/robot tests/interactive_navigation.robot
+# Chemin relatif au .robot -> pas besoin de --pythonpath.
+Library             ${CURDIR}/../ScreenshotCompareLibrary.py
+
+Suite Teardown      Close Versions
+
+
+*** Variables ***
+${SITE}             https://anathos.me/
+${FIREFOX_A}        /usr/bin/firefox
+${FIREFOX_B}        ${CURDIR}/../firefoxes/firefox-128esr/firefox
+${OUTPUT_DIR}       ${CURDIR}/../output/interactive
+# % de difference au-dela duquel une etape echoue.
+${FAIL_OVER}        ${5.0}
+
+
+*** Test Cases ***
+Naviguer Par Clics Et Comparer A Chaque Etape
+    [Documentation]    3 etapes : accueil -> clic Photographie -> retour + clic bouton langue.
+    Open Versions    ${SITE}    ${FIREFOX_A}    ${FIREFOX_B}
+
+    Verifier L'Etape    accueil
+
+    Click Element    css=a[href="/photographie"]
+    Verifier L'Etape    apres-clic-photographie
+
+    Go Back
+    Click Element    css=a[href="/en"]
+    Verifier L'Etape    apres-clic-bouton-langue
+
+
+*** Keywords ***
+Verifier L'Etape
+    [Arguments]    ${nom}
+    ${pct}=    Capture And Compare    ${nom}    ${OUTPUT_DIR}
+    Log    ${nom} -> ${pct} %    console=${True}
+    Should Be True    ${pct} <= ${FAIL_OVER}
+    ...    msg=Etape '${nom}' : ${pct} % de difference (seuil ${FAIL_OVER} %)

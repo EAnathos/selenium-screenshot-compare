@@ -13,6 +13,40 @@ from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.firefox.service import Service
 
 
+def make_firefox(binary: str, width: int = 1280, height: int = 900):
+    """Cree un driver Firefox headless pointant sur `binary` (vide = defaut).
+
+    Fenetre de taille fixe : indispensable pour que deux captures soient
+    comparables pixel a pixel. Le lazy-loading des images est desactive pour ne
+    pas avoir de trous dans les captures pleine page.
+    """
+    options = Options()
+    options.add_argument("--headless")
+    if binary:
+        options.binary_location = binary
+    options.add_argument(f"--width={width}")
+    options.add_argument(f"--height={height}")
+    options.set_preference("dom.image-lazy-loading.enabled", False)
+
+    driver = webdriver.Firefox(options=options, service=Service())
+    driver.set_window_size(width, height)
+    return driver
+
+
+def capture_full_page(driver, out: Path, wait: float = 2.0) -> None:
+    """Capture toute la page actuellement chargee dans `driver` vers `out`.
+
+    Attend `wait` s, fait defiler toute la page pour declencher le contenu
+    paresseux, remonte, puis enregistre la capture pleine hauteur (specifique
+    Firefox : get_full_page_screenshot_as_png).
+    """
+    out = Path(out)
+    time.sleep(wait)  # laisse le rendu / les animations se stabiliser
+    _scroll_full_page(driver, wait)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_bytes(driver.get_full_page_screenshot_as_png())
+
+
 def capture_screenshot(url: str, binary: str, out: Path, width: int = 1280,
                        height: int = 900, wait: float = 2.0) -> str:
     """Ouvre `url` avec le binaire Firefox donne, enregistre une capture pleine
@@ -20,34 +54,11 @@ def capture_screenshot(url: str, binary: str, out: Path, width: int = 1280,
 
     `binary` vide -> Firefox par defaut du systeme.
     """
-    out = Path(out)
-    options = Options()
-    options.add_argument("--headless")
-    if binary:
-        options.binary_location = binary
-    # Fenetre de taille fixe : indispensable pour que les deux captures soient
-    # comparables pixel a pixel.
-    options.add_argument(f"--width={width}")
-    options.add_argument(f"--height={height}")
-    # Force le chargement immediat des images en "loading=lazy" (sinon elles ne
-    # se chargent qu'une fois visibles a l'ecran -> trous dans la capture).
-    options.set_preference("dom.image-lazy-loading.enabled", False)
-
-    driver = webdriver.Firefox(options=options, service=Service())
+    driver = make_firefox(binary, width, height)
     try:
-        driver.set_window_size(width, height)
         driver.get(url)
-        time.sleep(wait)  # laisse le temps au rendu / animations de se stabiliser
-        # Fait defiler toute la page pour declencher le contenu paresseux
-        # (images, iframes, animations au scroll via IntersectionObserver), puis
-        # remonte en haut avant la capture.
-        _scroll_full_page(driver, wait)
-        version = driver.capabilities.get("browserVersion", "?")
-        # get_full_page_screenshot_as_png est specifique a Firefox : capture toute
-        # la page, pas seulement la partie visible.
-        out.parent.mkdir(parents=True, exist_ok=True)
-        out.write_bytes(driver.get_full_page_screenshot_as_png())
-        return version
+        capture_full_page(driver, out, wait)
+        return driver.capabilities.get("browserVersion", "?")
     finally:
         driver.quit()
 

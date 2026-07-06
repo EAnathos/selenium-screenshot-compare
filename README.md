@@ -16,10 +16,12 @@ Deux façons de l'utiliser :
 src/                           package cœur (Python pur, sans Robot Framework)
 ├── capture.py                 capture Selenium + scroll anti lazy-loading
 ├── comparison.py              diff d'images (numpy) -> DiffResult
-└── crawl.py                   découverte des pages (crawl same-domain)
+├── crawl.py                   découverte des pages (crawl same-domain)
+└── session.py                 session double : 2 Firefox pilotés en lockstep
 ScreenshotCompareLibrary.py    librairie Robot Framework (les fonctions -> keywords)
 PerPageModifier.py             pre-run modifier RF : 1 test distinct par page
-tests/firefox_versions.robot   suite RF
+tests/firefox_versions.robot        suite RF : crawl tout le site
+tests/interactive_navigation.robot  suite RF : scénario de navigation par clics
 compare.py                     CLI page unique (utilise le package)
 output/                        toutes les sorties (gitignore)
 ├── single/                    captures de la CLI page unique
@@ -134,6 +136,45 @@ Variables de comparaison : `FIREFOX_A`, `FIREFOX_B`, `OUTPUT_DIR`, `WIDTH`,
 `HEIGHT`, `WAIT`, `THRESHOLD`, `FAIL_OVER` (% de différence au-delà duquel le
 test d'une page échoue). Les paramètres de crawl (`START_URL`, `MAX_PAGES`,
 `MAX_DEPTH`) sont passés au modifier.
+
+## Usage — scénario de navigation par clics
+
+Plutôt qu'une liste d'URLs, on peut piloter un **vrai scénario fonctionnel** :
+ouvrir le site, **cliquer** sur des boutons/liens et comparer le rendu à chaque
+étape. Les deux versions de Firefox sont pilotées **en parallèle** (mêmes clics
+rejoués dans chacune), via `tests/interactive_navigation.robot` :
+
+```bash
+./.venv/bin/robot --outputdir output/robot tests/interactive_navigation.robot
+```
+
+Le test se lit comme un test Selenium classique :
+
+```robotframework
+Open Versions    ${SITE}    ${FIREFOX_A}    ${FIREFOX_B}
+Capture And Compare    accueil    ${OUTPUT_DIR}
+Click Element    css=a[href="/photographie"]
+Capture And Compare    apres-clic-photographie    ${OUTPUT_DIR}
+Go Back
+Click Element    css=a[href="/en"]
+Capture And Compare    apres-clic-bouton-langue    ${OUTPUT_DIR}
+[Teardown]    Close Versions
+```
+
+Keywords d'interaction (session double, façon Selenium) :
+
+| Keyword | Rôle |
+|---|---|
+| `Open Versions` | ouvre l'URL dans les 2 Firefox |
+| `Go To` | navigue vers une URL (2 versions) |
+| `Click Element` | clique (`css=`, `id=`, `xpath=`…) dans les 2 |
+| `Input Text` | saisit du texte dans les 2 |
+| `Go Back` | page précédente dans les 2 |
+| `Capture And Compare` | capture l'état courant + diff + `result.json` |
+| `Close Versions` | ferme les 2 navigateurs |
+
+Chaque `Capture And Compare` écrit `output/interactive/<étape>/result.json`
+(incluant l'URL réellement atteinte après le clic).
 
 ### Sortie du crawl
 
