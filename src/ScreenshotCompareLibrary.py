@@ -21,8 +21,8 @@ from robot.api.deco import keyword, library
 import os
 import sys
 
-# Rend le package `src` importable meme si RF n'ajoute pas la racine au path.
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Racine du projet (parent de src/) sur le path pour importer le package `src`.
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from src import (  # noqa: E402
     DualSession,

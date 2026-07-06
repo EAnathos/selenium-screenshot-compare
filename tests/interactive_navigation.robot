@@ -11,7 +11,7 @@ Documentation       Scenario de navigation par CLICS, compare a chaque etape le
 ...                 robot --outputdir output/robot tests/interactive_navigation.robot
 
 # Chemin relatif au .robot -> pas besoin de --pythonpath.
-Library             ${CURDIR}/../ScreenshotCompareLibrary.py
+Library             ${CURDIR}/../src/ScreenshotCompareLibrary.py
 
 Suite Teardown      Close Versions
 

@@ -8,10 +8,10 @@ Documentation       Compare le rendu d'un site entre deux versions de Firefox,
 ...                 page dans ${CAPTURES_DIR}/<slug>/.
 ...
 ...                 Lancer :
-...                 robot --prerunmodifier PerPageModifier.py:https://anathos.me/:20
+...                 robot --prerunmodifier src/PerPageModifier.py:https://anathos.me/:20
 ...                 ...    --outputdir output/robot tests/firefox_versions.robot
 
-Library             ${CURDIR}/../ScreenshotCompareLibrary.py
+Library             ${CURDIR}/../src/ScreenshotCompareLibrary.py
 
 
 *** Variables ***

@@ -13,16 +13,16 @@ Deux façons de l'utiliser :
 ## Architecture
 
 ```
-src/                           package cœur (Python pur, sans Robot Framework)
+src/                           tout le code Python
 ├── capture.py                 capture Selenium + scroll anti lazy-loading
 ├── comparison.py              diff d'images (numpy) -> DiffResult
 ├── crawl.py                   découverte des pages (crawl same-domain)
-└── session.py                 session double : 2 Firefox pilotés en lockstep
-ScreenshotCompareLibrary.py    librairie Robot Framework (les fonctions -> keywords)
-PerPageModifier.py             pre-run modifier RF : 1 test distinct par page
+├── session.py                 session double : 2 Firefox pilotés en lockstep
+├── compare.py                 CLI page unique
+├── ScreenshotCompareLibrary.py   librairie Robot Framework (fonctions -> keywords)
+└── PerPageModifier.py         pre-run modifier RF : 1 test distinct par page
 tests/firefox_versions.robot        suite RF : crawl tout le site
 tests/interactive_navigation.robot  suite RF : scénario de navigation par clics
-compare.py                     CLI page unique (utilise le package)
 output/                        toutes les sorties (gitignore)
 ├── single/                    captures de la CLI page unique
 ├── crawl/<slug>/              captures + result.json par page crawlée
@@ -64,7 +64,7 @@ Manuellement :
 ## Usage — CLI page unique
 
 ```bash
-./.venv/bin/python compare.py https://anathos.me/ \
+./.venv/bin/python src/compare.py https://anathos.me/ \
     --firefox-a /usr/bin/firefox \
     --firefox-b "$(pwd)/firefoxes/firefox-128esr/firefox" \
     --width 1280 --height 900 --wait 2
@@ -122,16 +122,16 @@ Puis pointe `--firefox-b /opt/firefox/firefox`.
 
 La suite crawle le site, compare **chaque page** (un **test RF distinct par
 page**) et écrit un fichier `result.json` par page. Le crawl est fait par le
-pre-run modifier `PerPageModifier.py`, qui génère un test par URL découverte :
+pre-run modifier `src/PerPageModifier.py`, qui génère un test par URL découverte :
 
 ```bash
 ./.venv/bin/robot \
-    --prerunmodifier "PerPageModifier.py;https://anathos.me/;20" \
+    --prerunmodifier "src/PerPageModifier.py;https://anathos.me/;20" \
     --outputdir output/robot \
     tests/firefox_versions.robot
 ```
 
-Arguments du modifier : `PerPageModifier.py;<START_URL>;<MAX_PAGES>;<MAX_DEPTH>`.
+Arguments du modifier : `src/PerPageModifier.py;<START_URL>;<MAX_PAGES>;<MAX_DEPTH>`.
 
 > **Séparateur `;` et non `:`** — comme l'URL contient déjà `:` (`https://`),
 > il faut utiliser le point-virgule comme séparateur d'arguments de Robot
@@ -144,14 +144,14 @@ Les paramètres de comparaison se surchargent avec `--variable` :
 
 ```bash
 ./.venv/bin/robot \
-    --prerunmodifier "PerPageModifier.py;https://exemple.com/;50" \
+    --prerunmodifier "src/PerPageModifier.py;https://exemple.com/;50" \
     --variable FIREFOX_B:/opt/firefox/firefox \
     --variable FAIL_OVER:2.0 \
     --outputdir output/robot \
     tests/firefox_versions.robot
 ```
 
-Variables de comparaison : `FIREFOX_A`, `FIREFOX_B`, `OUTPUT_DIR`, `WIDTH`,
+Variables de comparaison : `FIREFOX_A`, `FIREFOX_B`, `CAPTURES_DIR`, `WIDTH`,
 `HEIGHT`, `WAIT`, `THRESHOLD`, `FAIL_OVER` (% de différence au-delà duquel le
 test d'une page échoue). Les paramètres de crawl (`START_URL`, `MAX_PAGES`,
 `MAX_DEPTH`) sont passés au modifier.
@@ -171,12 +171,12 @@ Le test se lit comme un test Selenium classique :
 
 ```robotframework
 Open Versions    ${SITE}    ${FIREFOX_A}    ${FIREFOX_B}
-Capture And Compare    accueil    ${OUTPUT_DIR}
+Capture And Compare    accueil    ${CAPTURES_DIR}
 Click Element    css=a[href="/photographie"]
-Capture And Compare    apres-clic-photographie    ${OUTPUT_DIR}
+Capture And Compare    apres-clic-photographie    ${CAPTURES_DIR}
 Go Back
 Click Element    css=a[href="/en"]
-Capture And Compare    apres-clic-bouton-langue    ${OUTPUT_DIR}
+Capture And Compare    apres-clic-bouton-langue    ${CAPTURES_DIR}
 [Teardown]    Close Versions
 ```
 

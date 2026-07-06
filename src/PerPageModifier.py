@@ -14,7 +14,8 @@ from __future__ import annotations
 import os
 import sys
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Racine du projet (parent de src/) sur le path pour importer le package `src`.
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from robot.api import SuiteVisitor, logger  # noqa: E402
 
