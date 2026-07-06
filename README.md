@@ -42,6 +42,25 @@ python3 -m venv .venv
 geckodriver n'a **pas** besoin d'être installé : Selenium Manager (inclus dans
 selenium >= 4.6) le télécharge automatiquement au premier lancement.
 
+## Qualité / développement
+
+Lint et format des suites Robot Framework avec **Robocop**, orchestrés par
+**pre-commit** :
+
+```bash
+./.venv/bin/pip install -r requirements-dev.txt
+./.venv/bin/pre-commit install          # active le hook git
+```
+
+Ensuite chaque `git commit` formate et vérifie automatiquement les `.robot`.
+Manuellement :
+
+```bash
+./.venv/bin/robocop format    # formate les .robot (ex-robotidy)
+./.venv/bin/robocop check     # lint
+./.venv/bin/pre-commit run --all-files
+```
+
 ## Usage — CLI page unique
 
 ```bash

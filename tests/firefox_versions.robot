@@ -5,12 +5,12 @@ Documentation       Compare le rendu d'un site entre deux versions de Firefox,
 ...                 Les pages sont decouvertes au crawl par le pre-run modifier
 ...                 PerPageModifier, qui remplace le test placeholder ci-dessous
 ...                 par un test par page. Un fichier result.json est ecrit par
-...                 page dans ${OUTPUT_DIR}/<slug>/.
+...                 page dans ${CAPTURES_DIR}/<slug>/.
 ...
 ...                 Lancer :
 ...                 robot --prerunmodifier PerPageModifier.py:https://anathos.me/:20
 ...                 ...    --outputdir output/robot tests/firefox_versions.robot
-# Chemin relatif au .robot -> pas besoin de --pythonpath.
+
 Library             ${CURDIR}/../ScreenshotCompareLibrary.py
 
 
@@ -18,7 +18,7 @@ Library             ${CURDIR}/../ScreenshotCompareLibrary.py
 # -- parametres de COMPARAISON (utilises par le keyword) --
 ${FIREFOX_A}        /usr/bin/firefox
 ${FIREFOX_B}        ${CURDIR}/../firefoxes/firefox-128esr/firefox
-${OUTPUT_DIR}       ${CURDIR}/../output/crawl
+${CAPTURES_DIR}     ${CURDIR}/../output/crawl
 ${WIDTH}            ${1280}
 ${HEIGHT}           ${900}
 ${WAIT}             ${2}
@@ -35,8 +35,9 @@ Placeholder (remplace au runtime par un test par page)
 
 *** Keywords ***
 Compare One Page
+    [Documentation]    Compare une page entre les 2 versions ; echoue au-dela de ${FAIL_OVER} %.
     [Arguments]    ${url}
-    ${pct}=    Compare Page Across Versions    ${url}    ${FIREFOX_A}    ${FIREFOX_B}    ${OUTPUT_DIR}
+    ${pct}=    Compare Page Across Versions    ${url}    ${FIREFOX_A}    ${FIREFOX_B}    ${CAPTURES_DIR}
     ...    width=${WIDTH}    height=${HEIGHT}    wait=${WAIT}    threshold=${THRESHOLD}
     Log    ${url} -> ${pct} %    console=${True}
     Should Be True    ${pct} <= ${FAIL_OVER}
