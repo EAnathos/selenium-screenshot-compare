@@ -1,0 +1,16 @@
+# Environnement Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Sorties generees (captures, diffs, result.json, rapports Robot Framework)
+output/
+
+# Binaires Firefox telecharges (artefacts lourds, ~90 Mo)
+firefoxes/
+
+# Divers OS / editeurs
+.DS_Store
+*.swp
