@@ -54,9 +54,6 @@ Toutes les versions : <https://ftp.mozilla.org/pub/firefox/releases/>. Le dossie
 ./.venv/bin/robot --outputdir output/robot tests/interactive_navigation.robot
 ```
 
-La librairie est référencée par chemin relatif dans le `.robot`, donc **pas
-besoin de `--pythonpath`** ni d'être dans un répertoire précis.
-
 Le test se lit comme un test Selenium classique :
 
 ```robotframework
