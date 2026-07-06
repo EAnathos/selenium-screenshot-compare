@@ -40,14 +40,37 @@ selenium >= 4.6) le télécharge automatiquement au premier lancement.
 
 ## Obtenir un second binaire Firefox
 
-Pour comparer deux **versions**, il faut deux binaires distincts. Sans toucher au
-Firefox système, on peut récupérer une release précise (ESR par exemple) :
+Pour comparer deux **versions**, il faut deux binaires distincts. Prends le build
+**correspondant à ton OS** (une release ESR précise, par exemple), sans toucher au
+Firefox système.
+
+> ⚠️ Sous Windows, ne prends **pas** le `.tar.bz2` : c'est le build Linux, il ne
+> contient pas de `firefox.exe` et ne s'exécute pas sur Windows.
+
+### Linux
 
 ```bash
 mkdir -p firefoxes && cd firefoxes
 wget "https://ftp.mozilla.org/pub/firefox/releases/128.0esr/linux-x86_64/en-US/firefox-128.0esr.tar.bz2"
 tar xjf firefox-128.0esr.tar.bz2 && mv firefox firefox-128esr
+# -> binaire : firefoxes/firefox-128esr/firefox
 ```
+
+### Windows
+
+Télécharge l'**installeur** `Firefox Setup 128.0esr.exe` depuis
+<https://ftp.mozilla.org/pub/firefox/releases/128.0esr/win64/fr/>, puis installe-le
+en silencieux dans un dossier dédié (PowerShell) :
+
+```powershell
+& ".\Firefox Setup 128.0esr.exe" /S /InstallDirectoryPath="C:\ff128esr"
+& "C:\ff128esr\firefox.exe" --version   # doit répondre -> binaire : C:\ff128esr\firefox.exe
+```
+
+### macOS
+
+Monte le `.dmg` de la version voulue et copie l'app sous un autre nom ; le binaire
+est dans `Firefox.app/Contents/MacOS/firefox`.
 
 Toutes les versions : <https://ftp.mozilla.org/pub/firefox/releases/>. Le dossier
 `firefoxes/` est gitignoré (binaire lourd, ~90 Mo).
