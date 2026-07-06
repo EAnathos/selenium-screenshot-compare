@@ -47,22 +47,6 @@ def capture_full_page(driver, out: Path, wait: float = 2.0) -> None:
     out.write_bytes(driver.get_full_page_screenshot_as_png())
 
 
-def capture_screenshot(url: str, binary: str, out: Path, width: int = 1280,
-                       height: int = 900, wait: float = 2.0) -> str:
-    """Ouvre `url` avec le binaire Firefox donne, enregistre une capture pleine
-    page dans `out` et renvoie la version reelle du navigateur utilise.
-
-    `binary` vide -> Firefox par defaut du systeme.
-    """
-    driver = make_firefox(binary, width, height)
-    try:
-        driver.get(url)
-        capture_full_page(driver, out, wait)
-        return driver.capabilities.get("browserVersion", "?")
-    finally:
-        driver.quit()
-
-
 def _scroll_full_page(driver, wait: float) -> None:
     """Defile la page de haut en bas par paliers pour forcer le chargement du
     contenu paresseux, puis revient en haut."""
