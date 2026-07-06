@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """Librairie Robot Framework : pilote DEUX versions de Firefox en parallele et
-compare leur rendu apres chaque interaction (clic, saisie, navigation).
+compare leur rendu apres chaque interaction (clic, saisie, navigation). Gere
+aussi la capture / restauration d'un storage state (cookies + localStorage).
 
 Keywords exposes :
     Open Versions, Go To, Click Element, Input Text, Go Back,
-    Capture And Compare, Close Versions.
+    Capture And Compare, Load Storage State, Close Versions,
+    Open Auth Browser, Save Storage State, Close Auth Browser.
 """
 from __future__ import annotations
 
@@ -18,12 +20,15 @@ from robot.api.deco import keyword, library
 import os
 import sys
 
-# Racine du projet (parent de src/) sur le path pour importer le package `src`.
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Dossier de CETTE librairie (resources/keywords) sur le path, pour importer le
+# sous-package utils/.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from src import (  # noqa: E402
+from utils import (  # noqa: E402
     DualSession,
     compare_images,
+    make_firefox,
+    save_storage_state,
     slugify,
 )
 
@@ -35,6 +40,7 @@ class ScreenshotCompareLibrary:
     def __init__(self):
         self._session: DualSession | None = None
         self._wait: float = 2.0
+        self._auth_driver = None
 
     def _write_result(self, result_path: Path, data: dict) -> None:
         """Ecrit le fichier resultat (JSON) d'une etape."""
@@ -116,6 +122,20 @@ class ScreenshotCompareLibrary:
         logger.info(f"[{name}] {url} -> {r.percent:.4f} %")
         return r.percent
 
+    @keyword("Load Storage State")
+    def load_storage_state(self, path: str) -> bool:
+        """Injecte cookies + localStorage depuis `path` dans les deux versions
+        (session authentifiee), puis recharge. A appeler apres 'Open Versions',
+        une fois sur le domaine. Ignore avec un avertissement si le fichier est
+        absent (session anonyme)."""
+        applied = self._require_session().load_storage(Path(path))
+        if applied:
+            logger.info(f"Storage state charge depuis {path}")
+        else:
+            logger.warn(f"Storage state introuvable ({path}) : session anonyme. "
+                        "Lance d'abord tests/capture_auth.robot.")
+        return applied
+
     @keyword("Close Versions")
     def close_versions(self) -> None:
         """Ferme les deux navigateurs de la session double."""
@@ -128,3 +148,31 @@ class ScreenshotCompareLibrary:
             raise RuntimeError("Aucune session ouverte : appelle d'abord "
                                "'Open Versions'.")
         return self._session
+
+    # -- capture d'un storage state (un seul navigateur) --------------------
+
+    @keyword("Open Auth Browser")
+    def open_auth_browser(self, url: str, firefox_binary: str,
+                          headless: bool = False, width: int = 1280,
+                          height: int = 900) -> None:
+        """Ouvre UN Firefox sur `url` (visible par defaut, pour se connecter a
+        la main avant de capturer le storage state)."""
+        self._auth_driver = make_firefox(firefox_binary, width, height, headless)
+        self._auth_driver.get(url)
+        logger.info(f"Navigateur d'auth ouvert sur {url} (headless={headless})")
+
+    @keyword("Save Storage State")
+    def save_storage_state(self, path: str) -> None:
+        """Enregistre le storage state (cookies + localStorage) du navigateur
+        d'auth dans `path` (JSON)."""
+        if self._auth_driver is None:
+            raise RuntimeError("Ouvre d'abord 'Open Auth Browser'.")
+        save_storage_state(self._auth_driver, Path(path))
+        logger.info(f"Storage state enregistre -> {path}")
+
+    @keyword("Close Auth Browser")
+    def close_auth_browser(self) -> None:
+        """Ferme le navigateur d'auth."""
+        if self._auth_driver is not None:
+            self._auth_driver.quit()
+            self._auth_driver = None

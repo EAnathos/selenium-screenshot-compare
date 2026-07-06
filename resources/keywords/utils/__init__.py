@@ -7,6 +7,7 @@ from .capture import capture_full_page, make_firefox
 from .comparison import DiffResult, compare_images
 from .naming import slugify
 from .session import DualSession
+from .storage import apply_storage_state, save_storage_state
 
 __all__ = [
     "capture_full_page",
@@ -15,4 +16,6 @@ __all__ = [
     "DiffResult",
     "slugify",
     "DualSession",
+    "save_storage_state",
+    "apply_storage_state",
 ]

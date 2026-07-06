@@ -9,20 +9,26 @@ différence — comme un test fonctionnel classique en Robot Framework.
 ## Architecture
 
 ```
-src/                              tout le code Python
-├── capture.py                    driver Firefox + capture pleine page (scroll anti lazy-load)
-├── comparison.py                 diff d'images (numpy) -> DiffResult
-├── session.py                    session double : 2 Firefox pilotés en lockstep
-├── naming.py                     slugify (nom de dossier par étape)
-└── ScreenshotCompareLibrary.py   librairie Robot Framework (les fonctions -> keywords)
-tests/interactive_navigation.robot  la suite de test
-output/                           sorties (gitignore)
-├── interactive/<étape>/          version_a.png, version_b.png, diff.png, result.json
-└── robot/                        rapports Robot Framework (log.html, report.html)
+resources/
+├── keywords/
+│   ├── ScreenshotCompareLibrary.py   librairie Robot Framework (fonctions -> keywords)
+│   └── utils/                        package Python (cœur)
+│       ├── capture.py                driver Firefox + capture pleine page (anti lazy-load)
+│       ├── comparison.py             diff d'images (numpy) -> DiffResult
+│       ├── session.py                session double : 2 Firefox pilotés en lockstep
+│       ├── storage.py                storage state (cookies + localStorage)
+│       └── naming.py                 slugify (nom de dossier par étape)
+└── env/                              auth.json (storage state) — gitignore
+tests/
+├── interactive_navigation.robot      compare 2 versions au fil des clics
+└── capture_auth.robot                capture le storage state (session authentifiée)
+output/                               sorties (gitignore)
+├── interactive/<étape>/              version_a.png, version_b.png, diff.png, result.json
+└── robot/                            rapports Robot Framework (log.html, report.html)
 ```
 
-La logique métier vit dans `src/` ; la suite Robot Framework n'en est qu'une
-enveloppe.
+La logique métier vit dans `resources/keywords/utils/` ; la librairie Robot
+Framework et les suites n'en sont que des enveloppes.
 
 ## Installation
 
@@ -106,8 +112,32 @@ Variables surchargeables avec `--variable` : `SITE`, `FIREFOX_A`, `FIREFOX_B`,
 | `Click Element` | clique (`css=`, `id=`, `xpath=`…) dans les 2 |
 | `Input Text` | saisit du texte dans les 2 |
 | `Go Back` | page précédente dans les 2 |
+| `Load Storage State` | injecte cookies + localStorage (session authentifiée) dans les 2 |
 | `Capture And Compare` | capture l'état courant + diff + `result.json` |
 | `Close Versions` | ferme les 2 navigateurs |
+
+### Session authentifiée (storage state)
+
+Pour comparer des pages derrière un login, on capture d'abord une session
+(cookies + localStorage) avec ton Firefox, puis on la rejoue dans les deux
+versions — sans refaire l'authentification.
+
+**1. Capturer** (fenêtre visible : tu te connectes à la main pendant l'attente) :
+
+```bash
+./.venv/bin/robot --outputdir output/robot tests/capture_auth.robot
+```
+
+→ écrit `resources/env/auth.json`. Variables : `SITE`, `FIREFOX`, `LOGIN_WAIT`
+(secondes pour se connecter), `HEADLESS`.
+
+**2. Réutiliser** : `interactive_navigation.robot` appelle déjà
+`Load Storage State ${AUTH_FILE}` juste après `Open Versions`. Si `auth.json`
+existe, les deux versions démarrent connectées ; sinon un avertissement est logué
+et la session reste anonyme.
+
+> 🔒 `resources/env/` est **gitignoré** : `auth.json` contient des cookies de
+> session (des secrets), il ne doit **jamais** être committé ni partagé.
 
 ### Sortie
 

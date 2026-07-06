@@ -11,6 +11,7 @@ from pathlib import Path
 from selenium.webdriver.common.by import By
 
 from .capture import capture_full_page, make_firefox
+from .storage import apply_storage_state
 
 # Strategies de localisation facon Selenium (locator = "strategie=valeur").
 _STRATEGIES = {
@@ -77,6 +78,19 @@ class DualSession:
         for d in self._drivers:
             d.back()
         self._wait_ready()
+
+    def load_storage(self, path) -> bool:
+        """Injecte le storage state (cookies + localStorage) dans les deux
+        versions, puis recharge. Les drivers doivent deja etre sur le domaine.
+        Renvoie False si le fichier est absent."""
+        applied = False
+        for d in self._drivers:
+            applied = apply_storage_state(d, path) or applied
+        if applied:
+            for d in self._drivers:
+                d.refresh()
+            self._wait_ready()
+        return applied
 
     def _wait_ready(self, timeout: float = 10.0) -> None:
         """Attend document.readyState == complete sur les deux drivers."""

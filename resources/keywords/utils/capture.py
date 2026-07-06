@@ -13,15 +13,18 @@ from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.firefox.service import Service
 
 
-def make_firefox(binary: str, width: int = 1280, height: int = 900):
-    """Cree un driver Firefox headless pointant sur `binary` (vide = defaut).
+def make_firefox(binary: str, width: int = 1280, height: int = 900,
+                 headless: bool = True):
+    """Cree un driver Firefox pointant sur `binary` (vide = defaut).
 
     Fenetre de taille fixe : indispensable pour que deux captures soient
     comparables pixel a pixel. Le lazy-loading des images est desactive pour ne
-    pas avoir de trous dans les captures pleine page.
+    pas avoir de trous dans les captures pleine page. `headless=False` ouvre une
+    fenetre visible (utile pour se connecter a la main avant de capturer l'auth).
     """
     options = Options()
-    options.add_argument("--headless")
+    if headless:
+        options.add_argument("--headless")
     if binary:
         options.binary_location = binary
     options.add_argument(f"--width={width}")

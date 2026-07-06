@@ -11,6 +11,9 @@ output/
 # Binaires Firefox telecharges (artefacts lourds, ~90 Mo)
 firefoxes/
 
+# Storage state / secrets de session (cookies, tokens) : NE PAS committer
+resources/env/
+
 # Divers OS / editeurs
 .DS_Store
 *.swp

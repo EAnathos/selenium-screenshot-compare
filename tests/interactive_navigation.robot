@@ -10,8 +10,8 @@ Documentation       Scenario de navigation par CLICS, compare a chaque etape le
 ...                 Lancer :
 ...                 robot --outputdir output/robot tests/interactive_navigation.robot
 
-# Chemin relatif au .robot -> pas besoin de --pythonpath.
-Library             ${CURDIR}/../src/ScreenshotCompareLibrary.py
+# Chemin relatif au .robot.
+Library             ${CURDIR}/../resources/keywords/ScreenshotCompareLibrary.py
 
 Suite Teardown      Close Versions
 
@@ -21,6 +21,8 @@ ${SITE}             https://anathos.me/
 ${FIREFOX_A}        /usr/bin/firefox
 ${FIREFOX_B}        ${CURDIR}/../firefoxes/firefox-128esr/firefox
 ${CAPTURES_DIR}     ${CURDIR}/../output/interactive
+# Storage state (cookies + localStorage) produit par tests/capture_auth.robot.
+${AUTH_FILE}        ${CURDIR}/../resources/env/auth.json
 # % de difference au-dela duquel une etape echoue.
 ${FAIL_OVER}        ${5.0}
 
@@ -29,6 +31,7 @@ ${FAIL_OVER}        ${5.0}
 Naviguer Par Clics Et Comparer A Chaque Etape
     [Documentation]    3 etapes : accueil -> clic Photographie -> retour + clic bouton langue.
     Open Versions    ${SITE}    ${FIREFOX_A}    ${FIREFOX_B}
+    Load Storage State    ${AUTH_FILE}
 
     Verifier L'Etape    accueil
 
