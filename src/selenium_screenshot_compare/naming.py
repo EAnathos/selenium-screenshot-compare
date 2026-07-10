@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Petits utilitaires de nommage."""
+"""Small naming utilities."""
 
 from __future__ import annotations
 
@@ -8,9 +8,9 @@ from urllib.parse import urlparse
 
 
 def slugify(value: str) -> str:
-    """Transforme une URL ou un nom d'etape en identifiant de dossier sur.
+    """Turn a URL or step name into a safe folder identifier.
 
-    Ex : "https://site/en" -> "en", "apres-clic" -> "apres-clic".
+    E.g. "https://site/en" -> "en", "after-click" -> "after-click".
     """
     path = urlparse(value).path.strip("/") or value
     slug = re.sub(r"[^a-zA-Z0-9]+", "-", path).strip("-")

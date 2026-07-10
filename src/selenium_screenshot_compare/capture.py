@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Capture d'une page en pleine hauteur avec un binaire Firefox donne.
+"""Full-page capture using a given Firefox binary.
 
-Selenium Manager (integre a selenium >= 4.6) telecharge geckodriver tout seul.
+Selenium Manager (bundled with selenium >= 4.6) downloads geckodriver on its own.
 """
 
 from __future__ import annotations
@@ -15,12 +15,12 @@ from selenium.webdriver.firefox.service import Service
 
 
 def make_firefox(binary: str, width: int = 1280, height: int = 900, headless: bool = True):
-    """Cree un driver Firefox pointant sur `binary` (vide = defaut).
+    """Create a Firefox driver pointed at `binary` (empty = default).
 
-    Fenetre de taille fixe : indispensable pour que deux captures soient
-    comparables pixel a pixel. Le lazy-loading des images est desactive pour ne
-    pas avoir de trous dans les captures pleine page. `headless=False` ouvre une
-    fenetre visible (utile pour se connecter a la main avant de capturer l'auth).
+    Fixed-size window: required for two captures to be pixel-comparable. Image
+    lazy-loading is disabled to avoid holes in full-page captures.
+    `headless=False` opens a visible window (useful to log in manually before
+    capturing the auth state).
     """
     options = Options()
     if headless:
@@ -37,22 +37,22 @@ def make_firefox(binary: str, width: int = 1280, height: int = 900, headless: bo
 
 
 def capture_full_page(driver, out: Path, wait: float = 2.0) -> None:
-    """Capture toute la page actuellement chargee dans `driver` vers `out`.
+    """Capture the whole page currently loaded in `driver` into `out`.
 
-    Attend `wait` s, fait defiler toute la page pour declencher le contenu
-    paresseux, remonte, puis enregistre la capture pleine hauteur (specifique
-    Firefox : get_full_page_screenshot_as_png).
+    Waits `wait` seconds, scrolls the full page to trigger lazy content, scrolls
+    back to the top, then writes the full-height screenshot (Firefox-specific:
+    get_full_page_screenshot_as_png).
     """
     out = Path(out)
-    time.sleep(wait)  # laisse le rendu / les animations se stabiliser
+    time.sleep(wait)  # let the rendering / animations settle
     _scroll_full_page(driver, wait)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_bytes(driver.get_full_page_screenshot_as_png())
 
 
 def _scroll_full_page(driver, wait: float) -> None:
-    """Defile la page de haut en bas par paliers pour forcer le chargement du
-    contenu paresseux, puis revient en haut."""
+    """Scroll the page top-to-bottom in steps to force lazy content to load,
+    then scroll back to the top."""
     total = driver.execute_script("return document.body.scrollHeight")
     viewport = driver.execute_script("return window.innerHeight")
     y = 0
@@ -60,7 +60,7 @@ def _scroll_full_page(driver, wait: float) -> None:
         driver.execute_script("window.scrollTo(0, arguments[0]);", y)
         time.sleep(0.3)
         y += viewport
-        # La hauteur peut grandir a mesure que du contenu se charge.
+        # Height may grow as more content loads.
         total = driver.execute_script("return document.body.scrollHeight")
     driver.execute_script("window.scrollTo(0, 0);")
-    time.sleep(min(wait, 1.0))  # laisse les dernieres images finir de s'afficher
+    time.sleep(min(wait, 1.0))  # let the last images finish rendering

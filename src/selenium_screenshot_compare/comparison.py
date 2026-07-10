@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Comparaison pixel de deux captures d'ecran."""
+"""Pixel comparison of two screenshots."""
 
 from __future__ import annotations
 
@@ -12,26 +12,26 @@ from PIL import Image, ImageChops
 
 @dataclass
 class DiffResult:
-    """Resultat d'une comparaison entre deux captures."""
+    """Result of a comparison between two captures."""
 
-    percent: float  # pourcentage de pixels differents
-    first_diff_y: int | None  # 1re ligne de divergence substantielle (px)
+    percent: float  # percentage of differing pixels
+    first_diff_y: int | None  # first row of substantial divergence (px)
     width: int
     height: int
 
 
 def compare_images(img_a: Path, img_b: Path, diff_out: Path, threshold: int = 20) -> DiffResult:
-    """Compare deux captures, ecrit une image surlignant les differences et
-    renvoie un DiffResult.
+    """Compare two captures, write an image highlighting the differences, and
+    return a DiffResult.
 
-    `threshold` : ecart de couleur (0-255) en dessous duquel un pixel est
-    considere identique, pour absorber le bruit d'anti-aliasing.
+    `threshold`: colour delta (0-255) below which a pixel is considered
+    identical, to absorb anti-aliasing noise.
     """
     a = Image.open(img_a).convert("RGB")
     b = Image.open(img_b).convert("RGB")
 
-    # Les deux versions peuvent produire des pages de hauteur legerement
-    # differente : on aligne sur la plus grande en remplissant de blanc.
+    # The two versions may produce pages of slightly different heights: align
+    # on the largest one, padding with white.
     w = max(a.width, b.width)
     h = max(a.height, b.height)
     canvas_a = Image.new("RGB", (w, h), "white")
@@ -41,24 +41,24 @@ def compare_images(img_a: Path, img_b: Path, diff_out: Path, threshold: int = 20
 
     diff = ImageChops.difference(canvas_a, canvas_b)
 
-    # Analyse vectorisee (numpy) : rapide meme sur une capture pleine page de
-    # plusieurs megapixels. Un pixel "differe" si l'ecart depasse `threshold`
-    # sur au moins un canal, pour ignorer le bruit d'anti-aliasing.
+    # Vectorised analysis (numpy): fast even on a multi-megapixel full-page
+    # capture. A pixel "differs" if the delta exceeds `threshold` on at least
+    # one channel, to ignore anti-aliasing noise.
     arr = np.asarray(diff, dtype=np.int16)  # (h, w, 3)
-    per_pixel = arr.max(axis=2)  # ecart max sur RGB, par pixel
-    differing = per_pixel > threshold  # (h, w) booleen
+    per_pixel = arr.max(axis=2)  # max RGB delta, per pixel
+    differing = per_pixel > threshold  # (h, w) boolean
     changed = int(differing.sum())
     total = w * h
     pct = 100.0 * changed / total if total else 0.0
 
-    # Premiere ligne ou une part SUBSTANTIELLE des pixels differe : bien plus
-    # parlant que le premier pixel isole (souvent juste de l'anti-aliasing).
-    # Repere ainsi le vrai point de decalage vertical du layout.
-    row_frac = differing.mean(axis=1)  # fraction diff. par ligne
-    substantial = np.where(row_frac > 0.10)[0]  # >10 % de la ligne
+    # First row where a SUBSTANTIAL share of pixels differ: much more telling
+    # than the first isolated pixel (often just anti-aliasing). Spots the
+    # actual vertical offset of the layout.
+    row_frac = differing.mean(axis=1)  # fraction differing per row
+    substantial = np.where(row_frac > 0.10)[0]  # >10 % of the row
     first_diff_y = int(substantial[0]) if substantial.size else None
 
-    # Image de diff amplifiee (differences en clair sur fond noir).
+    # Amplified diff image (differences shown light on a dark background).
     Path(diff_out).parent.mkdir(parents=True, exist_ok=True)
     diff.point(lambda p: min(255, p * 8)).save(diff_out)
 

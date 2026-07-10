@@ -1,14 +1,14 @@
-"""Compare le rendu d'un site entre deux versions de Firefox pilotees en parallele.
+"""Compare a website's rendering between two Firefox versions driven in parallel.
 
-API publique (Python pur, sans dependance Robot Framework) :
+Public API (plain Python, no Robot Framework dependency):
 
-- ``make_firefox`` / ``capture_full_page`` : driver Firefox + capture pleine page
-- ``compare_images`` / ``DiffResult`` : diff pixel entre deux captures
-- ``DualSession`` : session double (2 Firefox en lockstep)
-- ``save_storage_state`` / ``apply_storage_state`` : storage state (cookies + localStorage)
-- ``slugify`` : nom de dossier a partir d'une etape
+- ``make_firefox`` / ``capture_full_page``: Firefox driver + full-page capture
+- ``compare_images`` / ``DiffResult``: pixel diff between two captures
+- ``DualSession``: dual session (2 Firefox instances in lockstep)
+- ``save_storage_state`` / ``apply_storage_state``: storage state (cookies + localStorage)
+- ``slugify``: folder name from a step label
 
-La librairie Robot Framework vit dans ``selenium_screenshot_compare.ScreenshotCompareLibrary``.
+The Robot Framework library lives in ``selenium_screenshot_compare.ScreenshotCompareLibrary``.
 """
 
 from __future__ import annotations

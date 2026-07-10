@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Session pilotant DEUX Firefox (version A et B) en parallele : chaque action
-(clic, saisie, navigation) est rejouee a l'identique dans les deux, pour pouvoir
-comparer le rendu apres n'importe quelle interaction, comme dans un vrai test.
+"""Session driving TWO Firefox instances (version A and B) in parallel: every
+action (click, input, navigation) is replayed identically in both, so we can
+compare the rendering after any interaction — like a real test.
 """
 
 from __future__ import annotations
@@ -15,7 +15,7 @@ from selenium.webdriver.common.by import By
 from .capture import capture_full_page, make_firefox
 from .storage import apply_storage_state
 
-# Strategies de localisation facon Selenium (locator = "strategie=valeur").
+# Selenium-style locator strategies (locator = "strategy=value").
 _STRATEGIES = {
     "css": By.CSS_SELECTOR,
     "xpath": By.XPATH,
@@ -29,8 +29,8 @@ _STRATEGIES = {
 
 
 def parse_locator(locator: str):
-    """ "css=a.btn", "id=submit", "xpath=//a"... -> (By.*, valeur).
-    Par defaut : xpath si commence par //, sinon selecteur CSS."""
+    """ "css=a.btn", "id=submit", "xpath=//a"... -> (By.*, value).
+    Default: xpath if it starts with //, otherwise a CSS selector."""
     for sep in ("=", ":"):
         if sep in locator:
             strategy, _, value = locator.partition(sep)
@@ -43,7 +43,7 @@ def parse_locator(locator: str):
 
 
 class DualSession:
-    """Deux drivers Firefox menes en lockstep."""
+    """Two Firefox drivers driven in lockstep."""
 
     def __init__(self, firefox_a: str, firefox_b: str, width: int = 1280, height: int = 900):
         self.driver_a = make_firefox(firefox_a, width, height)
@@ -55,7 +55,7 @@ class DualSession:
     def _drivers(self):
         return (self.driver_a, self.driver_b)
 
-    # -- navigation / interactions (rejouees sur les deux versions) ---------
+    # -- navigation / interactions (replayed on both versions) --------------
 
     def open(self, url: str) -> None:
         for d in self._drivers:
@@ -81,9 +81,9 @@ class DualSession:
         self._wait_ready()
 
     def load_storage(self, path) -> bool:
-        """Injecte le storage state (cookies + localStorage) dans les deux
-        versions, puis recharge. Les drivers doivent deja etre sur le domaine.
-        Renvoie False si le fichier est absent."""
+        """Inject the storage state (cookies + localStorage) in both versions,
+        then reload. Drivers must already be on the target domain. Returns
+        False if the file is missing."""
         applied = False
         for d in self._drivers:
             applied = apply_storage_state(d, path) or applied
@@ -94,7 +94,7 @@ class DualSession:
         return applied
 
     def _wait_ready(self, timeout: float = 10.0) -> None:
-        """Attend document.readyState == complete sur les deux drivers."""
+        """Wait for document.readyState == complete on both drivers."""
         for d in self._drivers:
             end = time.time() + timeout
             while time.time() < end:
@@ -105,7 +105,7 @@ class DualSession:
     # -- capture ------------------------------------------------------------
 
     def capture_both(self, shot_a: Path, shot_b: Path, wait: float = 2.0):
-        """Capture l'etat courant des deux versions. Renvoie (version_a, version_b)."""
+        """Capture the current state of both versions. Returns (version_a, version_b)."""
         capture_full_page(self.driver_a, shot_a, wait)
         capture_full_page(self.driver_b, shot_b, wait)
         return self.version_a, self.version_b

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Capture / restauration d'un "storage state" facon Playwright :
-cookies + localStorage, serialises en JSON.
+"""Playwright-style "storage state" capture and restore:
+cookies + localStorage, serialised as JSON.
 
-Permet d'enregistrer une session authentifiee depuis un navigateur, puis de la
-rejouer dans d'autres navigateurs sans refaire le login.
+Lets you record an authenticated session from one browser, then replay it in
+other browsers without going through the login flow again.
 """
 
 from __future__ import annotations
@@ -12,7 +12,7 @@ import contextlib
 import json
 from pathlib import Path
 
-# Cles de cookie acceptees par Selenium add_cookie().
+# Cookie keys accepted by Selenium add_cookie().
 _COOKIE_KEYS = ("name", "value", "path", "domain", "secure", "httpOnly", "expiry", "sameSite")
 
 _LOCALSTORAGE_JS = (
@@ -26,7 +26,7 @@ _LOCALSTORAGE_JS = (
 
 
 def capture_storage_state(driver) -> dict:
-    """Renvoie le storage state courant du driver (cookies + localStorage)."""
+    """Return the driver's current storage state (cookies + localStorage)."""
     local_storage = driver.execute_script(_LOCALSTORAGE_JS) or {}
     origin = driver.execute_script("return window.location.origin;")
     return {
@@ -41,7 +41,7 @@ def capture_storage_state(driver) -> dict:
 
 
 def save_storage_state(driver, path) -> None:
-    """Ecrit le storage state courant du driver dans `path` (JSON)."""
+    """Write the driver's current storage state to `path` (JSON)."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     state = capture_storage_state(driver)
@@ -49,11 +49,11 @@ def save_storage_state(driver, path) -> None:
 
 
 def apply_storage_state(driver, path) -> bool:
-    """Injecte cookies + localStorage depuis `path` dans le driver.
+    """Inject cookies + localStorage from `path` into the driver.
 
-    Le driver doit deja etre sur le domaine cible (add_cookie l'exige).
-    Renvoie False si le fichier n'existe pas. L'appelant doit recharger la page
-    pour que le site prenne en compte la session restauree.
+    The driver must already be on the target domain (add_cookie requires it).
+    Returns False if the file does not exist. The caller must reload the page
+    for the site to pick up the restored session.
     """
     path = Path(path)
     if not path.exists():
@@ -62,7 +62,7 @@ def apply_storage_state(driver, path) -> bool:
 
     for cookie in data.get("cookies", []):
         clean = {k: cookie[k] for k in _COOKIE_KEYS if k in cookie}
-        # cookie d'un autre domaine, sameSite invalide... on ignore.
+        # Cookie from another domain, invalid sameSite, etc. — ignore.
         with contextlib.suppress(Exception):
             driver.add_cookie(clean)
 

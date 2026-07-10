@@ -1,4 +1,4 @@
-# Environnement Python
+# Python environment
 .venv/
 __pycache__/
 *.py[cod]
@@ -7,19 +7,19 @@ __pycache__/
 .ruff_cache/
 .robocop_cache/
 
-# Artefacts de build
+# Build artefacts
 build/
 dist/
 
-# Sorties generees (captures, diffs, result.json, rapports Robot Framework)
+# Generated outputs (captures, diffs, result.json, Robot Framework reports)
 output/
 
-# Binaires Firefox telecharges (artefacts lourds, ~90 Mo)
+# Downloaded Firefox binaries (heavy artefacts, ~90 MB)
 firefoxes/
 
-# Storage state / secrets de session (cookies, tokens) : NE PAS committer
+# Storage state / session secrets (cookies, tokens): DO NOT commit
 resources/env/
 
-# Divers OS / editeurs
+# Misc OS / editors
 .DS_Store
 *.swp

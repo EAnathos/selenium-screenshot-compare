@@ -1,3 +1,3 @@
-# Installe le package (mode editable) + l'extra Robot Framework.
-# Equivalent : pip install -e ".[robot]"
+# Install the package (editable) + the Robot Framework extra.
+# Equivalent to: pip install -e ".[robot]"
 -e .[robot]

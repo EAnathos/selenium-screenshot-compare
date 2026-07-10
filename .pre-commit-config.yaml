@@ -1,20 +1,20 @@
-# Hooks executes avant chaque commit. Installer avec :  pre-commit install
+# Hooks executed before every commit. Install with:  pre-commit install
 repos:
   - repo: https://github.com/MarketSquare/robotframework-robocop
     rev: v8.3.2
     hooks:
-      # Formate les fichiers .robot (ex-robotidy).
+      # Format .robot files (ex-robotidy).
       - id: robocop-format
-      # Lint des fichiers .robot ; echoue si un probleme est trouve.
+      # Lint .robot files; fails if any issue is found.
       - id: robocop
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.6.9
     hooks:
-      # Lint Python (rapide) ; echoue si un probleme est trouve.
+      # Python lint (fast); fails if any issue is found.
       - id: ruff
         args: [--fix]
-      # Formate le code Python.
+      # Format Python code.
       - id: ruff-format
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
