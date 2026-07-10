@@ -77,6 +77,13 @@ fails, fix the root cause.
 If you change tooling (Ruff rules, Robocop config, hook versions), update the
 workflow accordingly.
 
+## Versioning
+
+The version is derived from **git tags** by `setuptools-scm` — there is no
+hardcoded version string to maintain. `__version__` reads it from
+`importlib.metadata` at runtime. To release: tag `vX.Y.Z` on `main` and push;
+the release workflow handles the rest (build + PyPI + GitHub Release).
+
 ## Adding a Robot Framework keyword
 
 1. Write the logic in a Python module of the package (not in

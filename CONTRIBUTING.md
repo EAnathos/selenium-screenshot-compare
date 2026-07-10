@@ -45,3 +45,21 @@ pull request:
 ./.venv/bin/python -c "import selenium_screenshot_compare as s; print(s.__version__)"
 ./.venv/bin/robot --dryrun tests/
 ```
+
+## Releasing
+
+The version is derived automatically from git tags by **setuptools-scm** — no
+version string to maintain manually.
+
+To publish a new release:
+
+1. Merge `dev` into `main`.
+2. Tag and push: `git tag v0.1.0 && git push origin v0.1.0`
+3. The [release workflow](.github/workflows/release.yml) automatically:
+   - Builds the sdist + wheel
+   - Publishes to **PyPI**
+   - Creates a **GitHub Release** with auto-generated release notes
+
+> First-time setup: configure [PyPI trusted publishing](https://docs.pypi.org/trusted-publishers/)
+> for the repository — add a publisher with workflow `release.yml` and
+> environment `pypi`. No API token needed after that.
