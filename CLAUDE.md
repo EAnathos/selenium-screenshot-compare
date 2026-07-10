@@ -70,7 +70,7 @@ fails, fix the root cause.
 
 `.github/workflows/ci.yml` runs on every push and pull request:
 
-- `pre-commit run --all-files` on Python 3.10, 3.11, 3.12
+- `pre-commit run --all-files` on Python 3.12
 - Package build (`python -m build`)
 - `robot --dryrun tests/` to verify the library imports cleanly
 

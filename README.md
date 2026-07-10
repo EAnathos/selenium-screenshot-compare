@@ -251,38 +251,7 @@ Three differences compared to the Linux commands elsewhere in the README:
 > it's almost always an invalid `FIREFOX_A`/`FIREFOX_B` path (the defaults
 > are Linux paths): check that `& "<path>" --version` responds for each.
 
-## Quality / development
+## Contributing
 
-Lint and formatting orchestrated by **pre-commit**:
-
-- **Ruff** — Python lint + format (`src/`, replaces flake8/black/isort)
-- **Robocop** — Robot Framework lint + format
-- **standard hooks** — trailing whitespace, end-of-file, YAML/TOML, large files
-
-```bash
-./.venv/bin/pip install -e ".[dev]"
-./.venv/bin/pre-commit install          # activate the git hook
-```
-
-Every `git commit` then formats and checks the code automatically. Manually:
-
-```bash
-./.venv/bin/ruff check src/             # Python lint
-./.venv/bin/ruff format src/            # Python format
-./.venv/bin/robocop format              # format .robot
-./.venv/bin/robocop check               # lint .robot
-./.venv/bin/pre-commit run --all-files  # everything at once
-```
-
-## Continuous integration
-
-A [GitHub Actions workflow](.github/workflows/ci.yml) runs on every push and
-pull request:
-
-- `pre-commit run --all-files` (Ruff, Robocop, standard hooks) on Python
-  3.10, 3.11 and 3.12
-- Package build (`python -m build`) to validate `pyproject.toml`
-- Robot Framework dry-run over `tests/` to validate the library imports
-
-See also [`CLAUDE.md`](CLAUDE.md) for project conventions (structure, style,
-when to rerun the hooks…).
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for development setup, linting, and CI
+details.
