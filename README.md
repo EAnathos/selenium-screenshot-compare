@@ -1,152 +1,156 @@
 # selenium-screenshot-compare
 
-Compare le rendu d'un site entre **deux versions de Firefox** au fil d'un
-**scénario de navigation** : on ouvre le site dans les deux versions en
-parallèle, on **clique** sur des boutons/liens (keywords façon Selenium) et à
-chaque étape on capture les deux rendus en pleine page et on mesure leur
-différence — comme un test fonctionnel classique en Robot Framework.
+Compare a website's rendering between **two Firefox versions** through a
+**navigation scenario**: open the site in both versions in parallel, **click**
+on buttons/links (Selenium-style keywords), and at each step capture both
+full-page renders and measure their difference — like a plain functional test
+in Robot Framework.
+
+Distributed as an **installable Python package**; usable from plain Python or
+as a Robot Framework library.
+
+## Installation
+
+From the repository (editable install, recommended for development):
+
+```bash
+python3 -m venv .venv
+./.venv/bin/pip install -e ".[robot]"        # "robot" extra = Robot Framework
+```
+
+For plain Python usage (no Robot Framework):
+
+```bash
+./.venv/bin/pip install -e .
+```
+
+For development (lint, hooks, tests):
+
+```bash
+./.venv/bin/pip install -e ".[dev]"
+./.venv/bin/pre-commit install
+```
+
+You do **not** need to install geckodriver: Selenium Manager (bundled with
+selenium >= 4.6) downloads it automatically on first run.
+
+> **Windows** — a venv places its executables under `.venv\Scripts\` (not
+> `.venv/bin/`). Replace `./.venv/bin/xxx` with `.\.venv\Scripts\xxx.exe` in
+> every command. Details: see the [Windows](#windows) section.
 
 ## Architecture
 
 ```
-resources/
-├── keywords/
-│   ├── ScreenshotCompareLibrary.py   librairie Robot Framework (fonctions -> keywords)
-│   └── utils/                        package Python (cœur)
-│       ├── capture.py                driver Firefox + capture pleine page (anti lazy-load)
-│       ├── comparison.py             diff d'images (numpy) -> DiffResult
-│       ├── session.py                session double : 2 Firefox pilotés en lockstep
-│       ├── storage.py                storage state (cookies + localStorage)
-│       └── naming.py                 slugify (nom de dossier par étape)
-└── env/                              auth.json (storage state) — gitignore
-tests/
-├── interactive_navigation.robot      compare 2 versions au fil des clics
-└── capture_auth.robot                capture le storage state (session authentifiée)
-output/                               sorties (gitignore)
-├── interactive/<étape>/              version_a.png, version_b.png, diff.png, result.json
-└── robot/                            rapports Robot Framework (log.html, report.html)
+selenium_screenshot_compare/           installable Python package
+├── __init__.py                        public API (plain Python)
+├── capture.py                         Firefox driver + full-page capture (anti lazy-load)
+├── comparison.py                      image diff (numpy) -> DiffResult
+├── session.py                         dual session: 2 Firefox instances driven in lockstep
+├── storage.py                         storage state (cookies + localStorage)
+├── naming.py                          slugify (per-step folder name)
+└── ScreenshotCompareLibrary.py        Robot Framework library (functions -> keywords)
+tests/                                 example Robot Framework suites
+├── interactive_navigation.robot       compares 2 versions across clicks
+└── capture_auth.robot                 captures the storage state (authenticated session)
+resources/env/                         auth.json (storage state) — gitignored
+output/                                generated outputs (gitignored)
+├── interactive/<step>/                version_a.png, version_b.png, diff.png, result.json
+└── robot/                             Robot Framework reports (log.html, report.html)
+pyproject.toml                         packaging (setuptools) + ruff config
 ```
 
-La logique métier vit dans `resources/keywords/utils/` ; la librairie Robot
-Framework et les suites n'en sont que des enveloppes.
+Business logic lives in the Python package; the Robot Framework library and
+the suites are just thin wrappers around it.
 
-## Installation
+## Usage — Python API
 
-```bash
-python3 -m venv .venv
-./.venv/bin/pip install -r requirements.txt
+```python
+from selenium_screenshot_compare import DualSession, compare_images
+
+session = DualSession("/usr/bin/firefox", "./firefoxes/firefox-128esr/firefox")
+session.open("https://anathos.me/")
+session.click("css=a[href='/photographie']")
+session.capture_both("a.png", "b.png")
+result = compare_images("a.png", "b.png", "diff.png")
+print(f"{result.percent:.2f} % difference")
+session.close()
 ```
 
-geckodriver n'a **pas** besoin d'être installé : Selenium Manager (inclus dans
-selenium >= 4.6) le télécharge automatiquement au premier lancement.
+## Usage — Robot Framework
 
-> **Windows** — un venv range ses exécutables dans `.venv\Scripts\` (et non
-> `.venv/bin/`). Remplace donc `./.venv/bin/xxx` par `.\.venv\Scripts\xxx.exe`
-> dans toutes les commandes. Détails et exemples : section [Windows](#windows).
+Once the package is installed with the `robot` extra, import the library by
+name:
 
-## Obtenir un second binaire Firefox
-
-Pour comparer deux **versions**, il faut deux binaires distincts. Prends le build
-**correspondant à ton OS** (une release ESR précise, par exemple), sans toucher au
-Firefox système.
-
-> ⚠️ Sous Windows, ne prends **pas** le `.tar.bz2` : c'est le build Linux, il ne
-> contient pas de `firefox.exe` et ne s'exécute pas sur Windows.
-
-### Linux
-
-```bash
-mkdir -p firefoxes && cd firefoxes
-wget "https://ftp.mozilla.org/pub/firefox/releases/128.0esr/linux-x86_64/en-US/firefox-128.0esr.tar.bz2"
-tar xjf firefox-128.0esr.tar.bz2 && mv firefox firefox-128esr
-# -> binaire : firefoxes/firefox-128esr/firefox
+```robotframework
+Library    selenium_screenshot_compare.ScreenshotCompareLibrary
 ```
 
-### Windows
-
-Télécharge l'**installeur** `Firefox Setup 128.0esr.exe` depuis
-<https://ftp.mozilla.org/pub/firefox/releases/128.0esr/win64/fr/>, puis installe-le
-en silencieux dans un dossier dédié (PowerShell) :
-
-```powershell
-& ".\Firefox Setup 128.0esr.exe" /S /InstallDirectoryPath="C:\ff128esr"
-& "C:\ff128esr\firefox.exe" --version   # doit répondre -> binaire : C:\ff128esr\firefox.exe
-```
-
-### macOS
-
-Monte le `.dmg` de la version voulue et copie l'app sous un autre nom ; le binaire
-est dans `Firefox.app/Contents/MacOS/firefox`.
-
-Toutes les versions : <https://ftp.mozilla.org/pub/firefox/releases/>. Le dossier
-`firefoxes/` est gitignoré (binaire lourd, ~90 Mo).
-
-## Usage
+Run the example suite:
 
 ```bash
 ./.venv/bin/robot --outputdir output/robot tests/interactive_navigation.robot
 ```
 
-Le test se lit comme un test Selenium classique :
+The test reads like a plain Selenium test:
 
 ```robotframework
 Open Versions    ${SITE}    ${FIREFOX_A}    ${FIREFOX_B}
-Capture And Compare    accueil    ${CAPTURES_DIR}
+Capture And Compare    home    ${CAPTURES_DIR}
 Click Element    css=a[href="/photographie"]
-Capture And Compare    apres-clic-photographie    ${CAPTURES_DIR}
+Capture And Compare    after-click-photography    ${CAPTURES_DIR}
 Go Back
 Click Element    css=a[href="/en"]
-Capture And Compare    apres-clic-bouton-langue    ${CAPTURES_DIR}
+Capture And Compare    after-click-language-button    ${CAPTURES_DIR}
 [Teardown]    Close Versions
 ```
 
-Variables surchargeables avec `--variable` : `SITE`, `FIREFOX_A`, `FIREFOX_B`,
-`CAPTURES_DIR`, `FAIL_OVER` (% de différence au-delà duquel une étape échoue).
+Variables overridable with `--variable`: `SITE`, `FIREFOX_A`, `FIREFOX_B`,
+`CAPTURES_DIR`, `FAIL_OVER` (% difference above which a step fails).
 
-### Keywords (session double, façon Selenium)
+### Keywords (dual session, Selenium-style)
 
-| Keyword | Rôle |
+| Keyword | Role |
 |---|---|
-| `Open Versions` | ouvre l'URL dans les 2 Firefox |
-| `Go To` | navigue vers une URL (2 versions) |
-| `Click Element` | clique (`css=`, `id=`, `xpath=`…) dans les 2 |
-| `Input Text` | saisit du texte dans les 2 |
-| `Go Back` | page précédente dans les 2 |
-| `Load Storage State` | injecte cookies + localStorage (session authentifiée) dans les 2 |
-| `Capture And Compare` | capture l'état courant + diff + `result.json` |
-| `Close Versions` | ferme les 2 navigateurs |
+| `Open Versions` | opens the URL in both Firefox instances |
+| `Go To` | navigate to a URL (both versions) |
+| `Click Element` | click (`css=`, `id=`, `xpath=`…) in both |
+| `Input Text` | type text in both |
+| `Go Back` | previous page in both |
+| `Load Storage State` | inject cookies + localStorage (authenticated session) into both |
+| `Capture And Compare` | capture current state + diff + `result.json` |
+| `Close Versions` | close both browsers |
 
-### Session authentifiée (storage state)
+### Authenticated session (storage state)
 
-Pour comparer des pages derrière un login, on capture d'abord une session
-(cookies + localStorage) avec ton Firefox, puis on la rejoue dans les deux
-versions — sans refaire l'authentification.
+To compare pages behind a login, first capture a session (cookies +
+localStorage) with your Firefox, then replay it in both versions — no need to
+re-authenticate.
 
-**1. Capturer** (fenêtre visible : tu te connectes à la main pendant l'attente) :
+**1. Capture** (visible window: log in manually during the wait):
 
 ```bash
 ./.venv/bin/robot --outputdir output/robot tests/capture_auth.robot
 ```
 
-→ écrit `resources/env/auth.json`. Variables : `SITE`, `FIREFOX`, `LOGIN_WAIT`
-(secondes pour se connecter), `HEADLESS`.
+→ writes `resources/env/auth.json`. Variables: `SITE`, `FIREFOX`, `LOGIN_WAIT`
+(seconds to log in), `HEADLESS`.
 
-**2. Réutiliser** : `interactive_navigation.robot` appelle déjà
-`Load Storage State ${AUTH_FILE}` juste après `Open Versions`. Si `auth.json`
-existe, les deux versions démarrent connectées ; sinon un avertissement est logué
-et la session reste anonyme.
+**2. Reuse**: `interactive_navigation.robot` already calls
+`Load Storage State ${AUTH_FILE}` right after `Open Versions`. If `auth.json`
+exists, both versions start logged in; otherwise a warning is logged and the
+session stays anonymous.
 
-> 🔒 `resources/env/` est **gitignoré** : `auth.json` contient des cookies de
-> session (des secrets), il ne doit **jamais** être committé ni partagé.
+> 🔒 `resources/env/` is **gitignored**: `auth.json` contains session cookies
+> (secrets) and must **never** be committed or shared.
 
-### Sortie
+### Output
 
-Chaque `Capture And Compare` écrit `output/interactive/<étape>/` avec les deux
-captures, l'image de diff et un `result.json` :
+Each `Capture And Compare` writes `output/interactive/<step>/` with both
+captures, the diff image, and a `result.json`:
 
 ```json
 {
-  "step": "apres-clic-photographie",
+  "step": "after-click-photography",
   "url": "https://anathos.me/photographie",
   "firefox_a": "152.0.1",
   "firefox_b": "128.0",
@@ -159,44 +163,81 @@ captures, l'image de diff et un `result.json` :
 }
 ```
 
-### Limite à connaître
+### Known limitation
 
-Le diff est **pixel-par-pixel** : un simple décalage vertical (un élément rendu
-quelques px plus haut par une version) fait « déborder » tout le contenu en
-dessous et gonfle le %, même si les pages se ressemblent visuellement. Le champ
-`first_diff_y` aide à distinguer « vraie différence de rendu » de « simple
-décalage ».
+The diff is **pixel-by-pixel**: a small vertical offset (an element rendered
+a few px higher by one version) makes everything below it "spill over" and
+inflates the percentage even if the pages look visually the same. The
+`first_diff_y` field helps distinguish a "real rendering difference" from a
+"simple offset".
+
+## Getting a second Firefox binary
+
+To compare two **versions**, you need two distinct binaries. Grab the build
+**for your OS** (a specific ESR release, for example), without touching the
+system Firefox.
+
+> ⚠️ On Windows, do **not** grab the `.tar.bz2`: it's the Linux build, it has
+> no `firefox.exe` and won't run on Windows.
+
+### Linux
+
+```bash
+mkdir -p firefoxes && cd firefoxes
+wget "https://ftp.mozilla.org/pub/firefox/releases/128.0esr/linux-x86_64/en-US/firefox-128.0esr.tar.bz2"
+tar xjf firefox-128.0esr.tar.bz2 && mv firefox firefox-128esr
+# -> binary: firefoxes/firefox-128esr/firefox
+```
+
+### Windows
+
+Download the `Firefox Setup 128.0esr.exe` installer from
+<https://ftp.mozilla.org/pub/firefox/releases/128.0esr/win64/en-US/>, then
+install it silently into a dedicated folder (PowerShell):
+
+```powershell
+& ".\Firefox Setup 128.0esr.exe" /S /InstallDirectoryPath="C:\ff128esr"
+& "C:\ff128esr\firefox.exe" --version   # should respond -> binary: C:\ff128esr\firefox.exe
+```
+
+### macOS
+
+Mount the `.dmg` for the desired version and copy the app under another name;
+the binary lives at `Firefox.app/Contents/MacOS/firefox`.
+
+All versions: <https://ftp.mozilla.org/pub/firefox/releases/>. The `firefoxes/`
+folder is gitignored (heavy binary, ~90 MB).
 
 ## Windows
 
-Trois différences par rapport aux commandes Linux du README :
+Three differences compared to the Linux commands elsewhere in the README:
 
-1. **Exécutables du venv** dans `.venv\Scripts\` :
+1. **venv executables** live in `.venv\Scripts\`:
 
    ```powershell
    python -m venv .venv
-   .\.venv\Scripts\pip.exe install -r requirements.txt
+   .\.venv\Scripts\pip.exe install -e ".[robot]"
    ```
 
-   Ou active le venv une fois, puis tape directement `robot`, `pip`… :
+   Or activate the venv once, then call `robot`, `pip`… directly:
 
    ```powershell
-   .\.venv\Scripts\Activate.ps1   # si bloqué : Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+   .\.venv\Scripts\Activate.ps1   # if blocked: Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
    ```
 
-2. **Chemins Firefox** : trouve le binaire système, installe le second dans un
-   dossier dédié, et utilise des slashs `/` (le `\` est un caractère d'échappement
-   en Robot Framework) :
+2. **Firefox paths**: find the system binary, install the second one in a
+   dedicated folder, and use forward slashes `/` (`\` is an escape character
+   in Robot Framework):
 
    ```powershell
-   # Firefox système (via le registre)
+   # System Firefox (via the registry)
    (Get-ItemProperty "HKLM:\SOFTWARE\Mozilla\Mozilla Firefox\*\Main")."PathToExe"
 
-   # Second Firefox : installer une version précise dans un dossier séparé
+   # Second Firefox: install a specific version into a separate folder
    & ".\Firefox Setup 128.0esr.exe" /S /InstallDirectoryPath="C:\ff128esr"
    ```
 
-3. **Lancer la suite** en surchargeant les deux chemins Firefox :
+3. **Run the suite** overriding both Firefox paths:
 
    ```powershell
    .\.venv\Scripts\robot.exe `
@@ -206,26 +247,11 @@ Trois différences par rapport aux commandes Linux du README :
      tests/interactive_navigation.robot
    ```
 
-> Si tu obtiens `NoSuchDriverException: Unable to obtain driver for firefox`,
-> c'est presque toujours un chemin `FIREFOX_A`/`FIREFOX_B` invalide (les valeurs
-> par défaut sont des chemins Linux) : vérifie que
-> `& "<chemin>" --version` répond bien pour chacun.
+> If you get `NoSuchDriverException: Unable to obtain driver for firefox`,
+> it's almost always an invalid `FIREFOX_A`/`FIREFOX_B` path (the defaults
+> are Linux paths): check that `& "<path>" --version` responds for each.
 
-## Qualité / développement
+## Contributing
 
-Lint et format des suites Robot Framework avec **Robocop**, orchestrés par
-**pre-commit** :
-
-```bash
-./.venv/bin/pip install -r requirements-dev.txt
-./.venv/bin/pre-commit install          # active le hook git
-```
-
-Ensuite chaque `git commit` formate et vérifie automatiquement les `.robot`.
-Manuellement :
-
-```bash
-./.venv/bin/robocop format    # formate les .robot (ex-robotidy)
-./.venv/bin/robocop check     # lint
-./.venv/bin/pre-commit run --all-files
-```
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for development setup, linting, and CI
+details.

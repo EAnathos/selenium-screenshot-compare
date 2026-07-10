@@ -1,33 +1,34 @@
 *** Settings ***
-Documentation       Ouvre le site avec le Firefox systeme (fenetre visible),
-...                 laisse le temps de se connecter, puis enregistre le storage
-...                 state (cookies + localStorage) dans resources/env/auth.json.
+Documentation       Opens the site with the system Firefox (visible window),
+...                 gives you time to log in, then saves the storage state
+...                 (cookies + localStorage) to resources/env/auth.json.
 ...
-...                 Ce fichier est ensuite reutilise par
-...                 tests/interactive_navigation.robot (keyword Load Storage
-...                 State) pour comparer les 2 versions en session authentifiee.
+...                 That file is then reused by
+...                 tests/interactive_navigation.robot (Load Storage State
+...                 keyword) to compare the 2 versions in an authenticated
+...                 session.
 ...
-...                 Lancer :
+...                 Run:
 ...                 robot --outputdir output/robot tests/capture_auth.robot
 
-Library             ${CURDIR}/../resources/keywords/ScreenshotCompareLibrary.py
+Library             selenium_screenshot_compare.ScreenshotCompareLibrary
 
 
 *** Variables ***
 ${SITE}             https://anathos.me/
 ${FIREFOX}          /usr/bin/firefox
 ${AUTH_FILE}        ${CURDIR}/../resources/env/auth.json
-# Fenetre visible par defaut pour pouvoir se connecter a la main.
+# Visible window by default so you can log in manually.
 ${HEADLESS}         ${False}
-# Secondes laissees pour se connecter avant la capture.
+# Seconds allowed to log in before the capture.
 ${LOGIN_WAIT}       ${20}
 
 
 *** Test Cases ***
-Capturer Le Storage State
-    [Documentation]    Connecte-toi dans la fenetre ouverte pendant l'attente.
+Capture The Storage State
+    [Documentation]    Log in in the opened window during the wait.
     Open Auth Browser    ${SITE}    ${FIREFOX}    headless=${HEADLESS}
-    Log    Connecte-toi maintenant (${LOGIN_WAIT}s) puis attends la capture.    console=${True}
+    Log    Log in now (${LOGIN_WAIT}s) then wait for the capture.    console=${True}
     Sleep    ${LOGIN_WAIT}s
     Save Storage State    ${AUTH_FILE}
     [Teardown]    Close Auth Browser
