@@ -41,7 +41,7 @@ selenium >= 4.6) downloads it automatically on first run.
 ## Architecture
 
 ```
-src/selenium_screenshot_compare/       installable Python package
+selenium_screenshot_compare/           installable Python package
 ├── __init__.py                        public API (plain Python)
 ├── capture.py                         Firefox driver + full-page capture (anti lazy-load)
 ├── comparison.py                      image diff (numpy) -> DiffResult

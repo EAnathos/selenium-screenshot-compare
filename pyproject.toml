@@ -8,13 +8,12 @@ dynamic = ["version"]
 description = "Compare a website's rendering between two Firefox versions driven in parallel via Selenium (Python + Robot Framework library)."
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "MIT" }
+license = "MIT"
 authors = [{ name = "EAnathos" }]
 keywords = ["selenium", "firefox", "screenshot", "diff", "robot-framework", "visual-regression"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Framework :: Robot Framework :: Library",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -43,7 +42,7 @@ Homepage = "https://github.com/EAnathos/selenium-screenshot-compare"
 Source = "https://github.com/EAnathos/selenium-screenshot-compare"
 
 [tool.setuptools.packages.find]
-where = ["src"]
+include = ["selenium_screenshot_compare"]
 
 [tool.setuptools_scm]
 version_scheme = "guess-next-dev"

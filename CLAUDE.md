@@ -9,7 +9,7 @@ between **two Firefox versions** driven in parallel via Selenium.
 
 ## Structure
 
-- `src/selenium_screenshot_compare/` — installable package (`src/` layout).
+- `selenium_screenshot_compare/` — installable package (flat layout).
   - Plain Python core: `capture.py`, `comparison.py`, `session.py`,
     `storage.py`, `naming.py`.
   - `ScreenshotCompareLibrary.py`: Robot Framework wrapper around the core.
@@ -88,7 +88,7 @@ the release workflow handles the rest (build + PyPI + GitHub Release).
 
 1. Write the logic in a Python module of the package (not in
    `ScreenshotCompareLibrary.py`).
-2. Expose a clean function/object in `src/selenium_screenshot_compare/__init__.py`
+2. Expose a clean function/object in `selenium_screenshot_compare/__init__.py`
    if it belongs to the public API.
 3. Add a `@keyword("Human Readable Name")` method in
    `ScreenshotCompareLibrary.py` that delegates to the core.

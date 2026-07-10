@@ -14,15 +14,15 @@ Orchestrated by **pre-commit** — every `git commit` runs them automatically.
 
 | Tool | Scope | What it does |
 |---|---|---|
-| **Ruff** | Python (`src/`) | lint + format (replaces flake8 / black / isort) |
+| **Ruff** | Python (`selenium_screenshot_compare/`) | lint + format (replaces flake8 / black / isort) |
 | **Robocop** | `.robot` files | lint + format |
 | **pre-commit-hooks** | everything | trailing whitespace, EOF, YAML/TOML, large files, debug statements |
 
 Run manually:
 
 ```bash
-./.venv/bin/ruff check src/             # Python lint
-./.venv/bin/ruff format src/            # Python format
+./.venv/bin/ruff check selenium_screenshot_compare/             # Python lint
+./.venv/bin/ruff format selenium_screenshot_compare/            # Python format
 ./.venv/bin/robocop format              # format .robot
 ./.venv/bin/robocop check               # lint .robot
 ./.venv/bin/pre-commit run --all-files  # everything at once
