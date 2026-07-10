@@ -31,11 +31,10 @@ jobs:
       - name: Verify version matches tag
         run: |
           TAG="${GITHUB_REF#refs/tags/v}"
-          WHEEL_VERSION=$(python -c "from importlib.metadata import version; import subprocess, sys; subprocess.check_call([sys.executable, '-m', 'pip', 'install', '--quiet', 'dist/*.whl']); print(version('selenium-screenshot-compare'))")
-          if [ "$TAG" != "$WHEEL_VERSION" ]; then
-            echo "Tag v$TAG does not match wheel version $WHEEL_VERSION"
-            exit 1
-          fi
+          pip install --quiet dist/*.whl
+          WHEEL_VERSION=$(python -c "from importlib.metadata import version; print(version('selenium-screenshot-compare'))")
+          echo "Tag=$TAG  Wheel=$WHEEL_VERSION"
+          [ "$TAG" = "$WHEEL_VERSION" ] || { echo "::error::Version mismatch"; exit 1; }
 
       - name: Upload distributions
         uses: actions/upload-artifact@v4
