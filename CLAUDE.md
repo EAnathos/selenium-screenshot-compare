@@ -105,6 +105,14 @@ the release workflow handles the rest (build + PyPI + GitHub Release).
   percentage even when the pages look identical. `first_diff_y` helps tell
   the two cases apart.
 
+## Git workflow
+
+- **Never commit directly to `main` or `dev`** — `main` is protected.
+- For every new task, create a branch from `dev` with a conventional prefix:
+  `feat/`, `fix/`, `refactor/`, `docs/`, `ci/`.
+- When done, push and open a PR targeting `dev`.
+- `dev` is merged into `main` via PR when ready for release.
+
 ## What not to do
 
 - Do not reintroduce the old `sys.path.insert` hack in the Robot Framework
