@@ -24,14 +24,15 @@ from robot.api.deco import keyword, library
 
 from . import (
     DualSession,
+    __version__,
     compare_images,
     make_firefox,
-    save_storage_state,
     slugify,
 )
+from . import save_storage_state as _save_storage_state
 
 
-@library(scope="GLOBAL", version="1.0")
+@library(scope="GLOBAL", version=__version__)
 class ScreenshotCompareLibrary:
     """Compare a website's rendering between two Firefox binaries."""
 
@@ -178,7 +179,7 @@ class ScreenshotCompareLibrary:
         `path` (JSON)."""
         if self._auth_driver is None:
             raise RuntimeError("Open 'Open Auth Browser' first.")
-        save_storage_state(self._auth_driver, Path(path))
+        _save_storage_state(self._auth_driver, Path(path))
         logger.info(f"Storage state saved -> {path}")
 
     @keyword("Close Auth Browser")

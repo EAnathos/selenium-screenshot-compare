@@ -13,6 +13,8 @@ The Robot Framework library lives in ``selenium_screenshot_compare.ScreenshotCom
 
 from __future__ import annotations
 
+from importlib.metadata import PackageNotFoundError, version
+
 from .capture import capture_full_page, make_firefox
 from .comparison import DiffResult, compare_images
 from .naming import slugify
@@ -30,4 +32,7 @@ __all__ = [
     "slugify",
 ]
 
-__version__ = "0.1.0"
+try:
+    __version__ = version("selenium-screenshot-compare")
+except PackageNotFoundError:  # package not installed (e.g. running from a checkout)
+    __version__ = "0.0.0+unknown"
