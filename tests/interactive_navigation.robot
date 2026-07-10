@@ -10,8 +10,8 @@ Documentation       Scenario de navigation par CLICS, compare a chaque etape le
 ...                 Lancer :
 ...                 robot --outputdir output/robot tests/interactive_navigation.robot
 
-# Chemin relatif au .robot.
-Library             ${CURDIR}/../resources/keywords/ScreenshotCompareLibrary.py
+# Le package doit etre installe (pip install -e ".[robot]").
+Library             selenium_screenshot_compare.ScreenshotCompareLibrary
 
 Suite Teardown      Close Versions
 

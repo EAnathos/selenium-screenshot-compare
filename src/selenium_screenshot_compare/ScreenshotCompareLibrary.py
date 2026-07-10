@@ -3,11 +3,16 @@
 compare leur rendu apres chaque interaction (clic, saisie, navigation). Gere
 aussi la capture / restauration d'un storage state (cookies + localStorage).
 
+Import Robot Framework (une fois le package installe) :
+
+    Library    selenium_screenshot_compare.ScreenshotCompareLibrary
+
 Keywords exposes :
     Open Versions, Go To, Click Element, Input Text, Go Back,
     Capture And Compare, Load Storage State, Close Versions,
     Open Auth Browser, Save Storage State, Close Auth Browser.
 """
+
 from __future__ import annotations
 
 import json
@@ -17,14 +22,7 @@ from pathlib import Path
 from robot.api import logger
 from robot.api.deco import keyword, library
 
-import os
-import sys
-
-# Dossier de CETTE librairie (resources/keywords) sur le path, pour importer le
-# sous-package utils/.
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
-from utils import (  # noqa: E402
+from . import (
     DualSession,
     compare_images,
     make_firefox,
@@ -45,23 +43,30 @@ class ScreenshotCompareLibrary:
     def _write_result(self, result_path: Path, data: dict) -> None:
         """Ecrit le fichier resultat (JSON) d'une etape."""
         result_path.parent.mkdir(parents=True, exist_ok=True)
-        result_path.write_text(json.dumps(data, indent=2, ensure_ascii=False),
-                               encoding="utf-8")
+        result_path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
 
     # -- keywords interactifs : piloter les 2 versions en lockstep ----------
     # Style Selenium : on ouvre une session double, on clique / saisit, puis on
     # compare l'etat courant. Ideal pour un scenario de navigation par clics.
 
     @keyword("Open Versions")
-    def open_versions(self, url: str, firefox_a: str, firefox_b: str,
-                      width: int = 1280, height: int = 900,
-                      wait: float = 2.0) -> None:
+    def open_versions(
+        self,
+        url: str,
+        firefox_a: str,
+        firefox_b: str,
+        width: int = 1280,
+        height: int = 900,
+        wait: float = 2.0,
+    ) -> None:
         """Ouvre `url` dans les deux versions de Firefox (session double)."""
         self._session = DualSession(firefox_a, firefox_b, width, height)
         self._wait = wait
         self._session.open(url)
-        logger.info(f"Sessions ouvertes : Firefox {self._session.version_a} "
-                    f"& {self._session.version_b} sur {url}")
+        logger.info(
+            f"Sessions ouvertes : Firefox {self._session.version_a} "
+            f"& {self._session.version_b} sur {url}"
+        )
 
     @keyword("Go To")
     def go_to(self, url: str) -> None:
@@ -84,9 +89,9 @@ class ScreenshotCompareLibrary:
         self._require_session().go_back()
 
     @keyword("Capture And Compare")
-    def capture_and_compare(self, name: str, output_dir: str,
-                            wait: float | None = None,
-                            threshold: int = 20) -> float:
+    def capture_and_compare(
+        self, name: str, output_dir: str, wait: float | None = None, threshold: int = 20
+    ) -> float:
         """Capture l'etat courant des deux versions, compare, ecrit un
         result.json dans output_dir/<name>/ et renvoie le % de difference."""
         session = self._require_session()
@@ -132,8 +137,10 @@ class ScreenshotCompareLibrary:
         if applied:
             logger.info(f"Storage state charge depuis {path}")
         else:
-            logger.warn(f"Storage state introuvable ({path}) : session anonyme. "
-                        "Lance d'abord tests/capture_auth.robot.")
+            logger.warn(
+                f"Storage state introuvable ({path}) : session anonyme. "
+                "Lance d'abord tests/capture_auth.robot."
+            )
         return applied
 
     @keyword("Close Versions")
@@ -145,16 +152,20 @@ class ScreenshotCompareLibrary:
 
     def _require_session(self) -> DualSession:
         if self._session is None:
-            raise RuntimeError("Aucune session ouverte : appelle d'abord "
-                               "'Open Versions'.")
+            raise RuntimeError("Aucune session ouverte : appelle d'abord 'Open Versions'.")
         return self._session
 
     # -- capture d'un storage state (un seul navigateur) --------------------
 
     @keyword("Open Auth Browser")
-    def open_auth_browser(self, url: str, firefox_binary: str,
-                          headless: bool = False, width: int = 1280,
-                          height: int = 900) -> None:
+    def open_auth_browser(
+        self,
+        url: str,
+        firefox_binary: str,
+        headless: bool = False,
+        width: int = 1280,
+        height: int = 900,
+    ) -> None:
         """Ouvre UN Firefox sur `url` (visible par defaut, pour se connecter a
         la main avant de capturer le storage state)."""
         self._auth_driver = make_firefox(firefox_binary, width, height, headless)

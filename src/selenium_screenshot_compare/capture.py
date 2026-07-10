@@ -3,6 +3,7 @@
 
 Selenium Manager (integre a selenium >= 4.6) telecharge geckodriver tout seul.
 """
+
 from __future__ import annotations
 
 import time
@@ -13,8 +14,7 @@ from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.firefox.service import Service
 
 
-def make_firefox(binary: str, width: int = 1280, height: int = 900,
-                 headless: bool = True):
+def make_firefox(binary: str, width: int = 1280, height: int = 900, headless: bool = True):
     """Cree un driver Firefox pointant sur `binary` (vide = defaut).
 
     Fenetre de taille fixe : indispensable pour que deux captures soient

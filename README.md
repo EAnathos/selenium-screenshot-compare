@@ -6,35 +6,29 @@ parallèle, on **clique** sur des boutons/liens (keywords façon Selenium) et à
 chaque étape on capture les deux rendus en pleine page et on mesure leur
 différence — comme un test fonctionnel classique en Robot Framework.
 
-## Architecture
-
-```
-resources/
-├── keywords/
-│   ├── ScreenshotCompareLibrary.py   librairie Robot Framework (fonctions -> keywords)
-│   └── utils/                        package Python (cœur)
-│       ├── capture.py                driver Firefox + capture pleine page (anti lazy-load)
-│       ├── comparison.py             diff d'images (numpy) -> DiffResult
-│       ├── session.py                session double : 2 Firefox pilotés en lockstep
-│       ├── storage.py                storage state (cookies + localStorage)
-│       └── naming.py                 slugify (nom de dossier par étape)
-└── env/                              auth.json (storage state) — gitignore
-tests/
-├── interactive_navigation.robot      compare 2 versions au fil des clics
-└── capture_auth.robot                capture le storage state (session authentifiée)
-output/                               sorties (gitignore)
-├── interactive/<étape>/              version_a.png, version_b.png, diff.png, result.json
-└── robot/                            rapports Robot Framework (log.html, report.html)
-```
-
-La logique métier vit dans `resources/keywords/utils/` ; la librairie Robot
-Framework et les suites n'en sont que des enveloppes.
+Distribué comme un **package Python installable** avec pip ; utilisable en
+Python pur, ou comme librairie Robot Framework.
 
 ## Installation
 
+Depuis le dépôt (mode éditable, recommandé pour développer) :
+
 ```bash
 python3 -m venv .venv
-./.venv/bin/pip install -r requirements.txt
+./.venv/bin/pip install -e ".[robot]"        # extra "robot" = Robot Framework
+```
+
+Pour l'usage Python pur (sans Robot Framework) :
+
+```bash
+./.venv/bin/pip install -e .
+```
+
+Pour développer (lint, hooks, tests) :
+
+```bash
+./.venv/bin/pip install -e ".[dev]"
+./.venv/bin/pre-commit install
 ```
 
 geckodriver n'a **pas** besoin d'être installé : Selenium Manager (inclus dans
@@ -42,46 +36,56 @@ selenium >= 4.6) le télécharge automatiquement au premier lancement.
 
 > **Windows** — un venv range ses exécutables dans `.venv\Scripts\` (et non
 > `.venv/bin/`). Remplace donc `./.venv/bin/xxx` par `.\.venv\Scripts\xxx.exe`
-> dans toutes les commandes. Détails et exemples : section [Windows](#windows).
+> dans toutes les commandes. Détails : section [Windows](#windows).
 
-## Obtenir un second binaire Firefox
+## Architecture
 
-Pour comparer deux **versions**, il faut deux binaires distincts. Prends le build
-**correspondant à ton OS** (une release ESR précise, par exemple), sans toucher au
-Firefox système.
-
-> ⚠️ Sous Windows, ne prends **pas** le `.tar.bz2` : c'est le build Linux, il ne
-> contient pas de `firefox.exe` et ne s'exécute pas sur Windows.
-
-### Linux
-
-```bash
-mkdir -p firefoxes && cd firefoxes
-wget "https://ftp.mozilla.org/pub/firefox/releases/128.0esr/linux-x86_64/en-US/firefox-128.0esr.tar.bz2"
-tar xjf firefox-128.0esr.tar.bz2 && mv firefox firefox-128esr
-# -> binaire : firefoxes/firefox-128esr/firefox
+```
+src/selenium_screenshot_compare/       package Python installable
+├── __init__.py                        API publique (Python pur)
+├── capture.py                         driver Firefox + capture pleine page (anti lazy-load)
+├── comparison.py                      diff d'images (numpy) -> DiffResult
+├── session.py                         session double : 2 Firefox pilotés en lockstep
+├── storage.py                         storage state (cookies + localStorage)
+├── naming.py                          slugify (nom de dossier par étape)
+└── ScreenshotCompareLibrary.py        librairie Robot Framework (fonctions -> keywords)
+tests/                                 suites Robot Framework d'exemple
+├── interactive_navigation.robot       compare 2 versions au fil des clics
+└── capture_auth.robot                 capture le storage state (session authentifiée)
+resources/env/                         auth.json (storage state) — gitignore
+output/                                sorties (gitignore)
+├── interactive/<étape>/               version_a.png, version_b.png, diff.png, result.json
+└── robot/                             rapports Robot Framework (log.html, report.html)
+pyproject.toml                         packaging (setuptools) + config ruff
 ```
 
-### Windows
+La logique métier vit dans le package Python ; la librairie Robot Framework et
+les suites n'en sont que des enveloppes.
 
-Télécharge l'**installeur** `Firefox Setup 128.0esr.exe` depuis
-<https://ftp.mozilla.org/pub/firefox/releases/128.0esr/win64/fr/>, puis installe-le
-en silencieux dans un dossier dédié (PowerShell) :
+## Usage — API Python
 
-```powershell
-& ".\Firefox Setup 128.0esr.exe" /S /InstallDirectoryPath="C:\ff128esr"
-& "C:\ff128esr\firefox.exe" --version   # doit répondre -> binaire : C:\ff128esr\firefox.exe
+```python
+from selenium_screenshot_compare import DualSession, compare_images
+
+session = DualSession("/usr/bin/firefox", "./firefoxes/firefox-128esr/firefox")
+session.open("https://anathos.me/")
+session.click("css=a[href='/photographie']")
+session.capture_both("a.png", "b.png")
+result = compare_images("a.png", "b.png", "diff.png")
+print(f"{result.percent:.2f} % de différence")
+session.close()
 ```
 
-### macOS
+## Usage — Robot Framework
 
-Monte le `.dmg` de la version voulue et copie l'app sous un autre nom ; le binaire
-est dans `Firefox.app/Contents/MacOS/firefox`.
+Une fois le package installé avec l'extra `robot`, la librairie s'importe par
+son nom :
 
-Toutes les versions : <https://ftp.mozilla.org/pub/firefox/releases/>. Le dossier
-`firefoxes/` est gitignoré (binaire lourd, ~90 Mo).
+```robotframework
+Library    selenium_screenshot_compare.ScreenshotCompareLibrary
+```
 
-## Usage
+Lancer la suite d'exemple :
 
 ```bash
 ./.venv/bin/robot --outputdir output/robot tests/interactive_navigation.robot
@@ -167,6 +171,43 @@ dessous et gonfle le %, même si les pages se ressemblent visuellement. Le champ
 `first_diff_y` aide à distinguer « vraie différence de rendu » de « simple
 décalage ».
 
+## Obtenir un second binaire Firefox
+
+Pour comparer deux **versions**, il faut deux binaires distincts. Prends le build
+**correspondant à ton OS** (une release ESR précise, par exemple), sans toucher au
+Firefox système.
+
+> ⚠️ Sous Windows, ne prends **pas** le `.tar.bz2` : c'est le build Linux, il ne
+> contient pas de `firefox.exe` et ne s'exécute pas sur Windows.
+
+### Linux
+
+```bash
+mkdir -p firefoxes && cd firefoxes
+wget "https://ftp.mozilla.org/pub/firefox/releases/128.0esr/linux-x86_64/en-US/firefox-128.0esr.tar.bz2"
+tar xjf firefox-128.0esr.tar.bz2 && mv firefox firefox-128esr
+# -> binaire : firefoxes/firefox-128esr/firefox
+```
+
+### Windows
+
+Télécharge l'**installeur** `Firefox Setup 128.0esr.exe` depuis
+<https://ftp.mozilla.org/pub/firefox/releases/128.0esr/win64/fr/>, puis installe-le
+en silencieux dans un dossier dédié (PowerShell) :
+
+```powershell
+& ".\Firefox Setup 128.0esr.exe" /S /InstallDirectoryPath="C:\ff128esr"
+& "C:\ff128esr\firefox.exe" --version   # doit répondre -> binaire : C:\ff128esr\firefox.exe
+```
+
+### macOS
+
+Monte le `.dmg` de la version voulue et copie l'app sous un autre nom ; le binaire
+est dans `Firefox.app/Contents/MacOS/firefox`.
+
+Toutes les versions : <https://ftp.mozilla.org/pub/firefox/releases/>. Le dossier
+`firefoxes/` est gitignoré (binaire lourd, ~90 Mo).
+
 ## Windows
 
 Trois différences par rapport aux commandes Linux du README :
@@ -175,7 +216,7 @@ Trois différences par rapport aux commandes Linux du README :
 
    ```powershell
    python -m venv .venv
-   .\.venv\Scripts\pip.exe install -r requirements.txt
+   .\.venv\Scripts\pip.exe install -e ".[robot]"
    ```
 
    Ou active le venv une fois, puis tape directement `robot`, `pip`… :
@@ -213,19 +254,27 @@ Trois différences par rapport aux commandes Linux du README :
 
 ## Qualité / développement
 
-Lint et format des suites Robot Framework avec **Robocop**, orchestrés par
-**pre-commit** :
+Lint et format orchestrés par **pre-commit** :
+
+- **Ruff** — lint + format du code Python (`src/`, remplace flake8/black/isort)
+- **Robocop** — lint + format des suites Robot Framework
+- **hooks standard** — trailing whitespace, end-of-file, YAML/TOML, gros fichiers
 
 ```bash
-./.venv/bin/pip install -r requirements-dev.txt
+./.venv/bin/pip install -e ".[dev]"
 ./.venv/bin/pre-commit install          # active le hook git
 ```
 
-Ensuite chaque `git commit` formate et vérifie automatiquement les `.robot`.
+Ensuite chaque `git commit` formate et vérifie automatiquement le code.
 Manuellement :
 
 ```bash
-./.venv/bin/robocop format    # formate les .robot (ex-robotidy)
-./.venv/bin/robocop check     # lint
-./.venv/bin/pre-commit run --all-files
+./.venv/bin/ruff check src/             # lint Python
+./.venv/bin/ruff format src/            # format Python
+./.venv/bin/robocop format              # format .robot
+./.venv/bin/robocop check               # lint .robot
+./.venv/bin/pre-commit run --all-files  # tout d'un coup
 ```
+
+Voir aussi [`CLAUDE.md`](CLAUDE.md) pour les conventions du projet
+(structure, style, quand relancer les hooks…).

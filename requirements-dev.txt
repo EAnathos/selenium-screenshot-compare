@@ -1,4 +1,4 @@
 # Outils de developpement (lint / format / hooks). Installer avec :
 #   ./.venv/bin/pip install -r requirements-dev.txt
-robotframework-robocop>=8.0
-pre-commit>=4.0
+# Equivalent : pip install -e ".[dev]"
+-e .[dev]

@@ -4,6 +4,12 @@ __pycache__/
 *.py[cod]
 *.egg-info/
 .pytest_cache/
+.ruff_cache/
+.robocop_cache/
+
+# Artefacts de build
+build/
+dist/
 
 # Sorties generees (captures, diffs, result.json, rapports Robot Framework)
 output/

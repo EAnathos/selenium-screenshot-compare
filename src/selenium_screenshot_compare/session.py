@@ -3,8 +3,10 @@
 (clic, saisie, navigation) est rejouee a l'identique dans les deux, pour pouvoir
 comparer le rendu apres n'importe quelle interaction, comme dans un vrai test.
 """
+
 from __future__ import annotations
 
+import contextlib
 import time
 from pathlib import Path
 
@@ -27,7 +29,7 @@ _STRATEGIES = {
 
 
 def parse_locator(locator: str):
-    """"css=a.btn", "id=submit", "xpath=//a"... -> (By.*, valeur).
+    """ "css=a.btn", "id=submit", "xpath=//a"... -> (By.*, valeur).
     Par defaut : xpath si commence par //, sinon selecteur CSS."""
     for sep in ("=", ":"):
         if sep in locator:
@@ -43,8 +45,7 @@ def parse_locator(locator: str):
 class DualSession:
     """Deux drivers Firefox menes en lockstep."""
 
-    def __init__(self, firefox_a: str, firefox_b: str,
-                 width: int = 1280, height: int = 900):
+    def __init__(self, firefox_a: str, firefox_b: str, width: int = 1280, height: int = 900):
         self.driver_a = make_firefox(firefox_a, width, height)
         self.driver_b = make_firefox(firefox_b, width, height)
         self.version_a = self.driver_a.capabilities.get("browserVersion", "?")
@@ -111,7 +112,5 @@ class DualSession:
 
     def close(self) -> None:
         for d in self._drivers:
-            try:
+            with contextlib.suppress(Exception):
                 d.quit()
-            except Exception:
-                pass

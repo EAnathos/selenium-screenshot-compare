@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Petits utilitaires de nommage."""
+
 from __future__ import annotations
 
 import re

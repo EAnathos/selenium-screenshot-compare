@@ -10,7 +10,7 @@ Documentation       Ouvre le site avec le Firefox systeme (fenetre visible),
 ...                 Lancer :
 ...                 robot --outputdir output/robot tests/capture_auth.robot
 
-Library             ${CURDIR}/../resources/keywords/ScreenshotCompareLibrary.py
+Library             selenium_screenshot_compare.ScreenshotCompareLibrary
 
 
 *** Variables ***

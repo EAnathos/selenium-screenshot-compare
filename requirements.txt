@@ -1,4 +1,3 @@
-selenium>=4.20
-Pillow>=10.0
-numpy>=1.24
-robotframework>=7.0
+# Installe le package (mode editable) + l'extra Robot Framework.
+# Equivalent : pip install -e ".[robot]"
+-e .[robot]

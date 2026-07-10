@@ -8,10 +8,21 @@ repos:
       # Lint des fichiers .robot ; echoue si un probleme est trouve.
       - id: robocop
 
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.9
+    hooks:
+      # Lint Python (rapide) ; echoue si un probleme est trouve.
+      - id: ruff
+        args: [--fix]
+      # Formate le code Python.
+      - id: ruff-format
+
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-yaml
+      - id: check-toml
       - id: check-added-large-files
+      - id: debug-statements

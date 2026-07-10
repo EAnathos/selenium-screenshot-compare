@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "selenium-screenshot-compare"
+version = "0.1.0"
+description = "Compare le rendu d'un site entre deux versions de Firefox, pilotees en parallele via Selenium (Python + librairie Robot Framework)."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "EAnathos" }]
+keywords = ["selenium", "firefox", "screenshot", "diff", "robot-framework", "visual-regression"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Framework :: Robot Framework :: Library",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Testing",
+]
+dependencies = [
+    "selenium>=4.20",
+    "Pillow>=10.0",
+    "numpy>=1.24",
+]
+
+[project.optional-dependencies]
+robot = ["robotframework>=7.0"]
+dev = [
+    "robotframework>=7.0",
+    "robotframework-robocop>=8.0",
+    "pre-commit>=4.0",
+    "ruff>=0.6",
+]
+
+[project.urls]
+Homepage = "https://github.com/EAnathos/selenium-screenshot-compare"
+Source = "https://github.com/EAnathos/selenium-screenshot-compare"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/selenium_screenshot_compare/ScreenshotCompareLibrary.py" = ["A003"]
