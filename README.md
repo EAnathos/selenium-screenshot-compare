@@ -73,6 +73,7 @@ Each `Capture And Compare` produces a folder with `version_a.png`,
 
 ## Documentation
 
+- [Keyword reference](docs/keywords.md) — detailed docs for every Robot Framework keyword
 - [Firefox setup](docs/firefox-setup.md) — getting a second Firefox binary (Linux / Windows / macOS)
 - [Authenticated sessions](docs/authenticated-sessions.md) — comparing pages behind a login
 - [Windows notes](docs/windows.md) — venv paths, Firefox paths, running suites
