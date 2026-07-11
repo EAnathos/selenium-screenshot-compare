@@ -1,4 +1,4 @@
-name: Auto-tag on merge to main
+name: Auto-tag and release on merge to main
 
 on:
   pull_request:
@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  id-token: write
 
 jobs:
   tag:
@@ -17,6 +18,8 @@ jobs:
        contains(github.event.pull_request.labels.*.name, 'release:minor') ||
        contains(github.event.pull_request.labels.*.name, 'release:major'))
     runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.bump.outputs.tag }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -47,4 +50,74 @@ jobs:
         run: |
           git tag "${{ steps.bump.outputs.tag }}"
           git push origin "${{ steps.bump.outputs.tag }}"
-          echo "Pushed ${{ steps.bump.outputs.tag }} → triggers release workflow"
+
+  build:
+    name: Build distributions
+    needs: tag
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.tag.outputs.tag }}
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build tools
+        run: pip install build
+
+      - name: Build sdist and wheel
+        run: python -m build
+
+      - name: Verify version matches tag
+        run: |
+          TAG="${{ needs.tag.outputs.tag }}"
+          TAG="${TAG#v}"
+          pip install --quiet dist/*.whl
+          WHEEL_VERSION=$(python -c "from importlib.metadata import version; print(version('selenium-screenshot-compare'))")
+          echo "Tag=$TAG  Wheel=$WHEEL_VERSION"
+          [ "$TAG" = "$WHEEL_VERSION" ] || { echo "::error::Version mismatch"; exit 1; }
+
+      - name: Upload distributions
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/*
+
+  pypi:
+    name: Publish to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    steps:
+      - name: Download distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+  github-release:
+    name: Create GitHub Release
+    needs: [tag, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.tag.outputs.tag }}
+          generate_release_notes: true
+          files: dist/*
